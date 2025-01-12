@@ -1,8 +1,8 @@
-import { configureStore } from '@reduxjs/toolkit';
-import { combineReducers } from 'redux';
-import { persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
-import userReducer from './slices/userSlice'; // Example slice
+import { configureStore } from "@reduxjs/toolkit";
+import { combineReducers } from "redux";
+import { persistReducer } from "redux-persist";
+import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
+import userReducer from "./slices/userSlice"; // Example slice
 
 // Combine all reducers
 const rootReducer = combineReducers({
@@ -11,7 +11,7 @@ const rootReducer = combineReducers({
 
 // Persist Config
 const persistConfig = {
-  key: 'root',
+  key: "root",
   storage,
 };
 

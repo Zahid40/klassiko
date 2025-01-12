@@ -27,16 +27,27 @@ import { PasswordInput } from "@/components/ui/password-input";
 import Logo from "../../../components/Logo";
 
 // Improved schema with additional validation rules
-const formSchema = z.object({
-  name: z.string(),
-  email: z.string().email({ message: "Invalid email address" }),
-  password: z
-    .string()
-    .min(6, { message: "Password must be at least 6 characters long" })
-    .regex(/[a-zA-Z0-9]/, { message: "Password must be alphanumeric" }),
-});
+const formSchema = z
+  .object({
+    name: z.string(),
+    email: z.string().email({ message: "Invalid email address" }),
+    password: z
+      .string()
+      .min(6, { message: "Password must be at least 6 characters long" })
+      .regex(/[a-zA-Z0-9]/, { message: "Password must be alphanumeric" }),
+    confirmPassword: z
+      .string()
+      .min(6, {
+        message: "Confirm Password must be at least 6 characters long",
+      })
+      .regex(/[a-zA-Z0-9]/, { message: "Password must be alphanumeric" }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"], // Set the path for error messages
+    message: "Passwords do not match",
+  });
 
-export function SignUpForm({
+export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
@@ -46,6 +57,7 @@ export function SignUpForm({
       name: "",
       email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
@@ -138,6 +150,30 @@ export function SignUpForm({
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-1">
+                      <div className="flex justify-between items-center">
+                        <FormLabel htmlFor="confirmPassword">
+                          Confirm Password
+                        </FormLabel>
+                      </div>
+                      <FormControl>
+                        <PasswordInput
+                          id="confirmPassword"
+                          placeholder="******"
+                          autoComplete="current-password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <Button type="submit" className="w-full">
                   Sign Up
                 </Button>

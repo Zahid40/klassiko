@@ -33,6 +33,7 @@ const formSchema = z.object({
     .string()
     .min(6, { message: "Password must be at least 6 characters long" })
     .regex(/[a-zA-Z0-9]/, { message: "Password must be alphanumeric" }),
+  
 });
 
 export function LoginForm({
@@ -124,13 +125,14 @@ export function LoginForm({
                     </FormItem>
                   )}
                 />
+                
                 <Button type="submit" className="w-full">
                   Login
                 </Button>
                 <div className="mt-4 text-center text-sm">
                   Don&apos;t have an account?{" "}
-                  <Link href="/sign-up" className="underline">
-                    Sign up
+                  <Link href="/register" className="underline">
+                    Register here
                   </Link>
                 </div>
               </div>
