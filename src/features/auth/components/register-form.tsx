@@ -25,10 +25,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import Logo from "../../../components/Logo";
+import { useRouter } from "next/navigation";
+
+type Role = "Student" | "Teacher";
+
+interface RoleSelectorProps {
+  onRoleChange: (role: Role) => void;
+}
 
 // Improved schema with additional validation rules
 const formSchema = z
   .object({
+    role: z.enum(["student", "teacher"], {
+      required_error: "You need to select a role.",
+    }),
     name: z.string(),
     email: z.string().email({ message: "Invalid email address" }),
     password: z
@@ -54,22 +64,38 @@ export function RegisterForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      role: undefined,
       name: "",
       email: "",
       password: "",
       confirmPassword: "",
     },
   });
+  const router = useRouter();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      // Assuming an async login function
-      console.log(values);
-      toast(
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-        </pre>
-      );
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: values.name,
+          email: values.email,
+          password: values.password,
+          role: values.role,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast.success("Registration successful! Redirecting to login...");
+        setTimeout(() => {
+          router.push("/login"); // Redirect to login page
+        }, 1500);
+      } else {
+        toast.error(result.error || "Registration failed. Please try again.");
+      }
     } catch (error) {
       console.error("Form submission error", error);
       toast.error("Failed to submit the form. Please try again.");
@@ -93,6 +119,42 @@ export function RegisterForm({
                 </p>
               </div>
               <div className="grid gap-6">
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-1">
+                      <FormLabel>Select your role</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-col sm:flex-row gap-4 grow w-full">
+                          <Button
+                            type="button"
+                            onClick={() => field.onChange("student")}
+                            className={`w-full  px-8 py-3 text-sm  `}
+                            variant={
+                              field.value !== "student" ? "outline" : "default"
+                            }
+                            aria-pressed={field.value === "student"}
+                          >
+                            Student
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={() => field.onChange("teacher")}
+                            className={`w-full  px-8 py-3 text-sm `}
+                            variant={
+                              field.value !== "teacher" ? "outline" : "default"
+                            }
+                            aria-pressed={field.value === "teacher"}
+                          >
+                            Teacher
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="name"

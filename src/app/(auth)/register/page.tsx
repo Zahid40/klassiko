@@ -1,3 +1,4 @@
+"use client";
 import Logo from "@/components/Logo";
 import { RegisterForm } from "@/features/auth/components/register-form";
 

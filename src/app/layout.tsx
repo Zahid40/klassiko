@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Unbounded } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import Providers from "./Providers/StoreProvider";
+import Providers from "../Providers/StoreProvider";
 
 const unbounded = Unbounded({
   subsets: ["latin"],
