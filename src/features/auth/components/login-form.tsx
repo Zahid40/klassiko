@@ -25,6 +25,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import Logo from "../../../components/Logo";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 
 // Improved schema with additional validation rules
 const formSchema = z.object({
@@ -33,7 +35,6 @@ const formSchema = z.object({
     .string()
     .min(6, { message: "Password must be at least 6 characters long" })
     .regex(/[a-zA-Z0-9]/, { message: "Password must be alphanumeric" }),
-  
 });
 
 export function LoginForm({
@@ -48,18 +49,20 @@ export function LoginForm({
     },
   });
 
+  const router = useRouter();
+
+  const { login } = useUser();
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      // Assuming an async login function
-      console.log(values);
-      toast(
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-        </pre>
-      );
+      await login(values.email, values.password);
+
+      toast.success("Login successful! Redirecting...");
+      setTimeout(() => {
+        router.push("/dashboard"); // Redirect user to dashboard
+      }, 1500);
     } catch (error) {
-      console.error("Form submission error", error);
-      toast.error("Failed to submit the form. Please try again.");
+      console.error("Login error:", error);
+      toast.error("Failed to login. Please try again.");
     }
   }
 
@@ -125,7 +128,7 @@ export function LoginForm({
                     </FormItem>
                   )}
                 />
-                
+
                 <Button type="submit" className="w-full">
                   Login
                 </Button>

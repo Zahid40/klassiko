@@ -28,6 +28,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { NavSecondary } from "./nav-secondary";
+import { useUser } from "@/context/UserContext";
 
 // This is sample data.
 const data = {
@@ -172,10 +173,16 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useUser();
+  const userData = {
+    name: user?.name!,
+    email: user?.email!,
+    avatar: user?.profile_picture!,
+  };
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher />
+        <TeamSwitcher role={user?.role} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} teams={data.teams} />
@@ -183,7 +190,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

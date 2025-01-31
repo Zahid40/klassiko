@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import supabase from "@/lib/db";
 
@@ -14,62 +15,38 @@ const LoginSchema = z.object({
 // POST API to handle login
 export async function POST(req: Request) {
   try {
-    // Parse request body
     const body = await req.json();
-    const parsed = LoginSchema.safeParse(body);
+    const { email, password } = body;
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.format() },
-        { status: 400 }
-      );
-    }
-
-    const { email, password } = parsed.data;
-
-    // Check if user exists in Supabase
-    const { data: user, error: userError } = await supabase
+    // Find user in Supabase
+    const { data: user, error } = await supabase
       .from("users")
-      .select("id, name, email, password, role")
+      .select("id, name, email, password, role, profile_picture")
       .eq("email", email)
       .single();
 
-    if (userError || !user) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
+    if (!user || error) {
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
-    // Compare passwords
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
-    }
+    // Generate JWT Token
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET!, {
+      expiresIn: "7d",
+    });
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: "7d" } // Token expires in 7 days
-    );
+    const userData = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profile_picture: user.profile_picture || "",
+      token,
+    };
 
-    return NextResponse.json(
-      {
-        success: true,
-        token,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-      },
-      { status: 200 }
-    );
+    // Set cookie using Next.js headers
+    cookies().set("userState", JSON.stringify(userData), { path: "/", maxAge: 604800 }); // 7 days
+
+    return NextResponse.json({ success: true, user: userData }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }

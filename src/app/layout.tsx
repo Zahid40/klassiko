@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Unbounded } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import Providers from "../Providers/StoreProvider";
+import { UserProvider } from "@/context/UserContext";
 
 const unbounded = Unbounded({
   subsets: ["latin"],
@@ -25,7 +25,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Klassiko" />
       </head>
       <body className={`unbounded.className antialiased`}>
-        <Providers>{children}</Providers>
+        <UserProvider>{children}</UserProvider>
         <Toaster position="top-center" />
       </body>
     </html>
