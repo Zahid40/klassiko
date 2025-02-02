@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { UserSchema } from "@/features/user/schema/user.schema";
 import bcrypt from "bcryptjs";
 import supabase from "@/lib/db";
+import { ApiResponseType } from "@/features/appState/types/app.type";
+
 
 export async function POST(req: Request) {
   try {
@@ -11,32 +13,95 @@ export async function POST(req: Request) {
       id: true,
       created_at: true,
       updated_at: true,
+      token: true,
     }).safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.format() },
+      return NextResponse.json<ApiResponseType>(
+        {
+          success: false,
+          status: 400,
+          message: "Invalid request data.",
+          data: parsed.error.format(),
+        },
         { status: 400 }
       );
     }
 
-    const { name, email, password , role } = parsed.data;
+    const { name, email, password, role } = parsed.data;
 
-    // Hash the password before storing
+    // ✅ Check if user already exists
+    const { data: existingUser, error: existingError } = await supabase
+      .from("users")
+      .select("id")
+      .eq("email", email)
+      .single();
+
+    if (existingUser) {
+      return NextResponse.json<ApiResponseType>(
+        {
+          success: false,
+          status: 400,
+          message: "Email is already in use. Please use a different email.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (existingError && existingError.code !== "PGRST116") {
+      return NextResponse.json<ApiResponseType>(
+        {
+          success: false,
+          status: 500,
+          message: "Database error.",
+          data: existingError.message,
+        },
+        { status: 500 }
+      );
+    }
+
+    // ✅ Hash the password before storing
     const hashedPassword = await bcrypt.hash(password, 10);
+    const profile_picture = `https://avatar.iran.liara.run/public/${Math.floor(Math.random() * 100)}`;
 
-    // Insert user into Supabase
+    // ✅ Insert new user into Supabase
     const { data, error } = await supabase
       .from("users")
-      .insert([{ name, email, password: hashedPassword , role }])
+      .insert([
+        { name, email, password: hashedPassword, role, profile_picture },
+      ])
       .select();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json<ApiResponseType>(
+        {
+          success: false,
+          status: 500,
+          message: "Failed to create user.",
+          data: error.message,
+        },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ success: true, user: data }, { status: 201 });
+    return NextResponse.json<ApiResponseType>(
+      {
+        success: true,
+        status: 201,
+        message: "User registered successfully.",
+        data,
+      },
+      { status: 201 }
+    );
   } catch (error) {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("Registration Error:", error);
+    return NextResponse.json<ApiResponseType>(
+      {
+        success: false,
+        status: 500,
+        message: "Internal server error.",
+      },
+      { status: 500 }
+    );
   }
 }

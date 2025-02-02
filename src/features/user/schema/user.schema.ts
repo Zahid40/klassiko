@@ -13,4 +13,5 @@ export const UserSchema = z.object({
   profile_picture: z.string().url().optional(), // Optional URL for profile picture
   created_at: z.string().optional(), // Date string
   updated_at: z.string().optional(), // Date string
+  token:z.string().optional()
 });

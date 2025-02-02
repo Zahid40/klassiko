@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import Logo from "../../../components/Logo";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 
 type Role = "Student" | "Teacher";
 
@@ -72,30 +73,17 @@ export function RegisterForm({
     },
   });
   const router = useRouter();
+  const { register } = useUser();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: values.name,
-          email: values.email,
-          password: values.password,
-          role: values.role,
-        }),
-      });
+      await register(values.name, values.email, values.password, values.role);
 
-      const result = await response.json();
+      toast.success("Registration successful! Redirecting to login...");
 
-      if (response.ok) {
-        toast.success("Registration successful! Redirecting to login...");
-        setTimeout(() => {
-          router.push("/login"); // Redirect to login page
-        }, 1500);
-      } else {
-        toast.error(result.error || "Registration failed. Please try again.");
-      }
+      setTimeout(() => {
+        router.push("/login"); // Redirect to login page
+      }, 1500);
     } catch (error) {
       console.error("Form submission error", error);
       toast.error("Failed to submit the form. Please try again.");
