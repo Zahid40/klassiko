@@ -18,14 +18,10 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import Logo from "../../../components/Logo";
-import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
 
 type Role = "Student" | "Teacher";
@@ -72,18 +68,11 @@ export function RegisterForm({
       confirmPassword: "",
     },
   });
-  const router = useRouter();
   const { register } = useUser();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       await register(values.name, values.email, values.password, values.role);
-
-      toast.success("Registration successful! Redirecting to login...");
-
-      setTimeout(() => {
-        router.push("/login"); // Redirect to login page
-      }, 1500);
     } catch (error) {
       console.error("Form submission error", error);
       toast.error("Failed to submit the form. Please try again.");

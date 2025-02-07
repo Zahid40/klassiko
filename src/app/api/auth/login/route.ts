@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import supabase from "@/lib/db";
+import { ApiResponseType } from "@/features/appState/types/app.type";
 
 // Define Login Schema
 const LoginSchema = z.object({
@@ -18,10 +19,11 @@ export async function POST(req: Request) {
     const parsed = LoginSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.format() },
-        { status: 400 }
-      );
+      return NextResponse.json<ApiResponseType>({
+        message: parsed.error.format().toString(),
+        success: false,
+        status: 400,
+      });
     }
 
     const { email, password } = parsed.data;
@@ -29,18 +31,28 @@ export async function POST(req: Request) {
     // Find user in Supabase
     const { data: user, error } = await supabase
       .from("users")
-      .select("id, name, email, password, role, profile_picture, created_at, updated_at")
+      .select(
+        "id, name, email, password, role, profile_picture, created_at, updated_at"
+      )
       .eq("email", email)
       .single();
 
     if (!user || error) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json<ApiResponseType>({
+        message: "Invalid email or password",
+        success: false,
+        status: 401,
+      });
     }
 
     // ✅ Verify password with bcrypt
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json<ApiResponseType>({
+        message: "Invalid email or password",
+        success: false,
+        status: 401,
+      });
     }
 
     // ✅ Generate JWT Token
@@ -67,12 +79,18 @@ export async function POST(req: Request) {
       maxAge: 604800, // 7 days
     });
 
-    return NextResponse.json(
-      { success: true, user: userData },
-      { status: 200 }
-    );
+    return NextResponse.json<ApiResponseType>({
+      success: true,
+      data: userData,
+      status: 200,
+      message: "Login successful!",
+    });
   } catch (error) {
     console.error("Login Error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json<ApiResponseType>({
+      message: "Server error",
+      success: false,
+      status: 500,
+    });
   }
 }

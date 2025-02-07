@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "./ui/button";
 import { useUser } from "@/context/UserContext";
+import ProfileDialog from "@/features/user/components/profile-dialog";
 
 export function NavUser({
   user,
@@ -88,6 +89,9 @@ export function NavUser({
               <DropdownMenuItem>
                 <BadgeCheck />
                 Account
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <ProfileDialog />
               </DropdownMenuItem>
 
               <DropdownMenuItem>

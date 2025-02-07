@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   AudioWaveform,
+  Bell,
   BookOpen,
   Bot,
   Command,
@@ -29,14 +30,10 @@ import {
 } from "@/components/ui/sidebar";
 import { NavSecondary } from "./nav-secondary";
 import { useUser } from "@/context/UserContext";
+import ProfileDialog from "@/features/user/components/profile-dialog";
 
 // This is sample data.
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   teams: [
     {
       name: "Class 10th Maths",
@@ -152,6 +149,11 @@ const data = {
       url: "#",
       icon: Send,
     },
+    {
+      title: "Notifications",
+      url: "#",
+      icon: Bell,
+    },
   ],
   projects: [
     {
@@ -190,7 +192,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={userData} />
+        <ProfileDialog />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

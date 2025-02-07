@@ -18,14 +18,10 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import Logo from "../../../components/Logo";
-import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
 
 // Improved schema with additional validation rules
@@ -49,17 +45,10 @@ export function LoginForm({
     },
   });
 
-  const router = useRouter();
-
   const { login } = useUser();
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       await login(values.email, values.password);
-
-      toast.success("Login successful! Redirecting...");
-      setTimeout(() => {
-        router.push("/dashboard"); // Redirect user to dashboard
-      }, 1500);
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Failed to login. Please try again.");

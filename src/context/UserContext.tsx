@@ -100,32 +100,34 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         body: JSON.stringify({ email, password }),
       });
 
-      const result = await response.json();
+      const result: ApiResponseType = await response.json();
 
-      if (result.success) {
+      if (result.success || result.data) {
+        const user = result.data;
         const userData: UserType = {
-          id: result.user.id,
-          name: result.user.name,
-          email: result.user.email,
-          password: result.user.password,
-          role: result.user.role,
-          profile_picture: result.user.profile_picture || "",
-          created_at: result.user.created_at,
-          updated_at: result.user.updated_at,
-          token: result.user.token,
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          password: user.password,
+          role: user.role,
+          profile_picture: user.profile_picture || "",
+          created_at: user.created_at,
+          updated_at: user.updated_at,
+          token: user.token,
         };
 
         setUser(userData);
         document.cookie = `userState=${encodeURIComponent(
           JSON.stringify(userData)
         )}; path=/; max-age=604800`; // Store in cookies (7 days)
-        localStorage.setItem("token", result.token); // Store token separately
+        localStorage.setItem("token", user.token); // Store token separately
+        toast.success(result.message);
         router.push("/dashboard"); // Redirect after login
       } else {
-        throw new Error(result.error || "Invalid login credentials");
+        toast.error(result.message);
       }
     } catch (error) {
-      throw new Error("Login failed:" + error);
+      toast.error("Login failed:" + error);
     }
   };
 
@@ -151,13 +153,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const result: ApiResponseType = await response.json();
 
       if (result.success) {
-        throw new Error("Registration successful! Redirecting to login...");
+        toast.success(result.message);
+        router.push("/login");
       } else {
-        throw new Error(result.message || "Registration failed. Please try again.");
+        toast.error(result.message);
       }
     } catch (error) {
       console.error("Form submission error", error);
-      throw new Error("Failed to submit the form. Please try again.");
+      toast.error("Failed to submit the form. Please try again.");
     }
   };
 
