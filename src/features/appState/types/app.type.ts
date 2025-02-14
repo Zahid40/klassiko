@@ -3,4 +3,9 @@ export type ApiResponseType = {
   status: number;
   message: string;
   data?: any;
+  page?: {
+    total: number;
+    current: number;
+    size: number;
+  };
 };

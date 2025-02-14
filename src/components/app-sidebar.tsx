@@ -17,7 +17,7 @@ import {
   SquareTerminal,
 } from "lucide-react";
 
-import { NavMain } from "@/components/nav-main";
+import { ClassSwitcher } from "@/components/classSwitcher";
 import { NavProjects } from "@/components/nav-projects";
 import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
@@ -31,6 +31,8 @@ import {
 import { NavSecondary } from "./nav-secondary";
 import { useUser } from "@/context/UserContext";
 import ProfileDialog from "@/features/user/components/profile-dialog";
+import { toast } from "sonner";
+import { ClassType } from "@/features/class/types/class.type";
 
 // This is sample data.
 const data = {
@@ -176,18 +178,14 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useUser();
-  const userData = {
-    name: user?.name!,
-    email: user?.email!,
-    avatar: user?.profile_picture!,
-  };
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher role={user?.role} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} teams={data.teams} />
+        <ClassSwitcher />
         <NavProjects projects={data.projects} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
