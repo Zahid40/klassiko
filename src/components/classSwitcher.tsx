@@ -22,7 +22,7 @@ import { ClassType } from "@/features/class/types/class.type";
 import { useUser } from "@/context/UserContext";
 import React from "react";
 import { toast } from "sonner";
-import { ApiResponseType } from "@/features/appState/types/app.type";
+import { ApiResponseType } from "@/features/app/types/app.type";
 import { Skeleton } from "./ui/skeleton";
 
 export const ClassSwitcher = () => {

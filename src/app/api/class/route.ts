@@ -1,4 +1,4 @@
-import { ApiResponseType } from "@/features/appState/types/app.type";
+import { ApiResponseType } from "@/features/app/types/app.type";
 import {
   classSchema,
 } from "@/features/class/schema/class.schema";

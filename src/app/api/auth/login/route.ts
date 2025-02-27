@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import supabase from "@/lib/db";
-import { ApiResponseType } from "@/features/appState/types/app.type";
+import { ApiResponseType } from "@/features/app/types/app.type";
 
 // Define Login Schema
 const LoginSchema = z.object({

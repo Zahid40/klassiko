@@ -10,7 +10,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { UserType } from "@/features/user/types/user.type";
-import { ApiResponseType } from "@/features/appState/types/app.type";
+import { ApiResponseType } from "@/features/app/types/app.type";
 
 // Define User Type
 interface User {
