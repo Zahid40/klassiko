@@ -69,18 +69,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
         const userData = JSON.parse(decodeURIComponent(storedUser));
 
-        const response = await fetch("/api/auth/verify", {
-          method: "GET",
-        });
+        // const response = await fetch("/api/auth/verify", {
+        //   method: "GET",
+        // });
 
-        const result = await response.json();
+        // const result = await response.json();
 
-        if (result.isVerified) {
-          setUser(userData); // Set user if verification is successful
-        } else {
-          toast.error(result.message);
-          logout();
-        }
+        // if (result.isVerified) {
+        //   setUser(userData); // Set user if verification is successful
+        // } else {
+        //   toast.error(result.message);
+        //   logout();
+        // }
+        setUser(userData);
       } catch (error) {
         console.error("Error verifying user:", error);
         toast.error("Error verifying user:" + error);

@@ -1,7 +1,5 @@
 import { ApiResponseType } from "@/features/app/types/app.type";
-import {
-  classSchema,
-} from "@/features/class/schema/class.schema";
+import { classSchema } from "@/features/class/schema/class.schema";
 import supabase from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 

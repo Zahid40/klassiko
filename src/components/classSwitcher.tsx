@@ -17,21 +17,54 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ClassType } from "@/features/class/types/class.type";
 import { useUser } from "@/context/UserContext";
 import React from "react";
 import { toast } from "sonner";
 import { ApiResponseType } from "@/features/app/types/app.type";
 import { Skeleton } from "./ui/skeleton";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export const ClassSwitcher = () => {
   const { user } = useUser();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
 
-  const [classes, setClasses] = React.useState<ClassType[]>([]);
+  const [classes, setClasses] = useState<ClassType[]>([]);
+  const isMobile = useIsMobile();
+  const [activeClass, setActiveClass] = useState(classes[0]);
 
-  React.useEffect(() => {
+  // 1) On mount, if the URL is missing page or pageSize, set them
+  useEffect(() => {
+    if (!searchParams) return;
+    const newParams = new URLSearchParams(searchParams.toString());
+
+    let changed = false;
+    if (!newParams.has("class")) {
+      newParams.set("class", "");
+      changed = true;
+    }
+    if (changed) {
+      // Replace so we don't break the back button
+      router.replace(`?${newParams.toString()}`);
+    }
+  }, [router, searchParams]);
+
+  // 2) Helper to set a single search param & navigate
+  const setSearchParam = useCallback(
+    (name: string, value: string) => {
+      if (!searchParams) return;
+      const params = new URLSearchParams(searchParams.toString());
+      params.set(name, value);
+      // We push so the user can go back in history if needed
+      router.push(`?${params.toString()}`);
+    },
+    [router, searchParams]
+  );
+
+  useEffect(() => {
     if (user) {
       const fetchClasses = async () => {
         setIsLoading(true);
@@ -61,8 +94,9 @@ export const ClassSwitcher = () => {
     }
   }, [user?.id]);
 
-  const isMobile = useIsMobile();
-  const [activeClass, setActiveClass] = useState(classes[0]);
+  useEffect(() => {
+    setSearchParam("class", activeClass?.id);
+  }, [activeClass]);
 
   return (
     <SidebarGroup>
