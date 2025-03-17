@@ -7,6 +7,7 @@ import { ApiResponseType } from "@/features/app/types/app.type";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 
 export default function Class() {
   const searchParams = useSearchParams();
@@ -55,17 +56,17 @@ export default function Class() {
   }
 
   return (
-    <div className="flex flex-row gap-6 items-center">
-      <Avatar className="size-24 border-2 border-dashed border-primary-500">
-        {/* <AvatarImage src="https://github.com/shadcn.png" /> */}
+    <div className="flex flex-col gap-6 items-center  h-full">
+      {/* <Avatar className="size-12 ">
         <AvatarFallback className="bg-primary-500 text-background text-2xl font-bold capitalize">
           {classes.class_name.slice(0, 1)}
         </AvatarFallback>
-      </Avatar>
+      </Avatar> */}
       <div>
-      <h1 className="text-2xl text-nowrap">{classes.class_name}</h1>
+        <h1 className="text-2xl text-nowrap">{classes.class_name}</h1>
 
-      <Separator />
+        <Separator className="w-full" />
+        <Button>add question</Button>
       </div>
     </div>
   );
