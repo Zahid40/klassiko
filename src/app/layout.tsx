@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={unbounded.className}>
+    <html lang="en" className={unbounded.className} >
       <head>
         <meta name="apple-mobile-web-app-title" content="Klassiko" />
       </head>

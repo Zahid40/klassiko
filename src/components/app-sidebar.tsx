@@ -87,6 +87,11 @@ const data = {
       url: "/dashboard/paper",
       icon: Map,
     },
+    {
+      name: "Question",
+      url: "/dashboard/question",
+      icon: Map,
+    },
   ],
 };
 

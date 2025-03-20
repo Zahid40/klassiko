@@ -36,8 +36,8 @@ import {
 } from "@/components/ui/dialog";
 import { Add } from "iconsax-react";
 import supabase from "@/lib/db";
-import { questionSchema } from "../schema/paper.schema";
 import { useUser } from "@/context/UserContext";
+import { questionSchema } from "../schema/question.schema";
 
 const formSchema = questionSchema.pick({
   question_type: true,

@@ -1,9 +1,2 @@
-import React from 'react'
-
-export default function page() {
-  return (
-    <div>
-      Quiz
-    </div>
-  )
-}
+import QuizPage from '@/features/quiz/components/quiz'
+export default ()=> <QuizPage/>
