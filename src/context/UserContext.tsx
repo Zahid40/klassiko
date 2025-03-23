@@ -10,17 +10,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { UserType } from "@/features/user/types/user.type";
-import { ApiResponseType } from "@/features/app/types/app.type";
-
-// Define User Type
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: "admin" | "teacher" | "student";
-  profile_picture?: string;
-  token: string;
-}
+import { ApiResponseType } from "@/types/app.type";
 
 // Define Context Type
 interface UserContextType {

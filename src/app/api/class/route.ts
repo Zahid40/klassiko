@@ -1,6 +1,6 @@
-import { ApiResponseType } from "@/features/app/types/app.type";
-import { classSchema } from "@/features/class/schema/class.schema";
+import { ApiResponseType } from "@/types/app.type";
 import supabase from "@/lib/db";
+import { classSchema } from "@/schema/schema";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: Request) {

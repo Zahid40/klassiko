@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { UserSchema } from "@/features/user/schema/user.schema";
 import bcrypt from "bcryptjs";
 import supabase from "@/lib/db";
-import { ApiResponseType } from "@/features/app/types/app.type";
+import { ApiResponseType } from "@/types/app.type";
 
 export async function POST(req: Request) {
   try {

@@ -4,12 +4,10 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -29,15 +27,15 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Add } from "iconsax-react";
-import supabase from "@/lib/db";
 import { useUser } from "@/context/UserContext";
-import { questionSchema } from "../schema/question.schema";
+import { questionSchema } from "@/schema/schema";
+import { useMutation } from "@tanstack/react-query";
+import { addQuestion } from "@/actions/question.action";
 
 const formSchema = questionSchema.pick({
   question_type: true,
@@ -46,10 +44,16 @@ const formSchema = questionSchema.pick({
   correct_answer: true,
 });
 
-export default function AddQuestionDialog() {
+interface AddQuestionDialogProps {
+  onSuccess: () => void;
+}
+
+export default function AddQuestionDialog({
+  onSuccess,
+}: AddQuestionDialogProps) {
   const { user } = useUser();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -62,50 +66,30 @@ export default function AddQuestionDialog() {
 
   const questionType = form.watch("question_type");
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setLoading(true);
-    try {
-      const parsedSchema = questionSchema.pick({
-        question_type: true,
-        question_text: true,
-        options: true,
-        correct_answer: true,
-        teacher_id: true,
-      });
-      const payload: z.infer<typeof parsedSchema> = {
-        ...values,
-        teacher_id: user?.id!,
-      };
-
-      const parsed = parsedSchema.safeParse(payload);
-
-      if (!parsed.success) {
-        console.error("Validation failed", parsed.error);
-        toast.error("Invalid form data. Please check your inputs.");
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("questions")
-        .insert([parsed.data])
-        .select();
-
-      if (error) throw error;
-
+  // ✅ TanStack useMutation for handling question submission
+  const { mutate, isPending } = useMutation({
+    mutationFn: (values: z.infer<typeof formSchema>) =>
+      addQuestion(values, user?.id!),
+    onSuccess: () => {
       toast.success("Question added successfully!");
-      console.log("Inserted data:", data);
+      onSuccess();
       form.reset();
       setIsDialogOpen(false);
-    } catch (error) {
-      console.error("Form submission error", error);
-      toast.error("Failed to submit the form. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    },
+    onError: (error: any) => {
+      console.error("Submission error:", error);
+      toast.error(
+        error.message || "Failed to submit the form. Please try again."
+      );
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    mutate(values);
   }
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen} >
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
         <Button>
           <Add size={42} />
@@ -116,11 +100,10 @@ export default function AddQuestionDialog() {
         <DialogHeader>
           <DialogTitle>Add Questions</DialogTitle>
           <DialogDescription>
-            Add a question and use them to create papers and quizzes.
+            Add a question and use it to create papers and quizzes.
           </DialogDescription>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Question Type Field */}
               <FormField
                 control={form.control}
                 name="question_type"
@@ -143,13 +126,12 @@ export default function AddQuestionDialog() {
                         </SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormDescription>Choose your question type</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* Conditionally Render Fields based on Question Type */}
+              {/* Render Fields based on Question Type */}
               {questionType === "general" && (
                 <>
                   <FormField
@@ -178,7 +160,7 @@ export default function AddQuestionDialog() {
                         <FormLabel>Correct Answer</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="An amoeba is a single-celled organism that has no fixed shape and moves using pseudopodia."
+                            placeholder="An amoeba is a single-celled organism..."
                             className="resize-none"
                             {...field}
                           />
@@ -218,12 +200,11 @@ export default function AddQuestionDialog() {
                         <FormLabel>Options</FormLabel>
                         <FormControl>
                           <TagsInput
-                            value={field.value}
+                            value={field.value as string[]}
                             onValueChange={field.onChange}
-                            placeholder="Enter your options"
+                            placeholder="Enter options"
                           />
                         </FormControl>
-                        <FormDescription>Add multiple options</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -238,7 +219,7 @@ export default function AddQuestionDialog() {
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          disabled={form.watch("options").length === 0}
+                          disabled={form.watch("options")?.length === 0}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -248,7 +229,7 @@ export default function AddQuestionDialog() {
                           <SelectContent>
                             {form
                               .watch("options")
-                              .map((option: string, idx: number) => (
+                              ?.map((option: string, idx: number) => (
                                 <SelectItem key={idx} value={option}>
                                   {option}
                                 </SelectItem>
@@ -261,12 +242,12 @@ export default function AddQuestionDialog() {
                   />
                 </>
               )}
-              <div className="flex flex-row gap-4">
+              <div className="flex gap-4">
                 <Button variant="outline" onClick={() => form.reset()}>
                   Clear
                 </Button>
-                <Button type="submit" className="flex-1" disabled={loading}>
-                  {loading ? "Adding..." : "Add"}
+                <Button type="submit" className="flex-1" disabled={isPending}>
+                  {isPending ? "Adding..." : "Add"}
                 </Button>
               </div>
             </form>
