@@ -32,7 +32,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Add } from "iconsax-react";
-import { useUser } from "@/context/UserContext";
+import { useUser } from "@/components/providers/user-provider";
 import { questionSchema } from "@/schema/schema";
 import { useMutation } from "@tanstack/react-query";
 import { addQuestion } from "@/actions/question.action";

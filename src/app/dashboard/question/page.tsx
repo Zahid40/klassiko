@@ -1,5 +1,5 @@
 "use client";
-import UnifiedPagination from "@/features/app/components/unified-pagination";
+import UnifiedPagination from "@/components/unified-pagination";
 import { useSearchParams } from "next/navigation";
 import React from "react";
 import { Badge } from "@/components/ui/badge";
@@ -7,11 +7,11 @@ import { Asterisk, SquareStack } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TickCircle } from "iconsax-react";
 import { formatDistance, subDays } from "date-fns";
-import AddQuestionDialog from "@/features/question/components/add-question-dialog";
+import AddQuestionDialog from "@/components/add-question-dialog";
 import { useQuery } from "@tanstack/react-query";
 import { getQuestions } from "@/actions/question.action";
 import { QuestionType } from "@/types/type";
-import { useUser } from "@/context/UserContext";
+import { useUser } from "@/components/providers/user-provider";
 
 export default function QuestionPage() {
   const searchParams = useSearchParams();

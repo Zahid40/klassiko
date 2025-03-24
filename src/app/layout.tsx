@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Unbounded } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { UserProvider } from "@/context/UserContext";
+import { UserProvider } from "@/components/providers/user-provider";
 import { TanstackProvider } from "@/components/providers/tanstack-provider";
 
 const unbounded = Unbounded({

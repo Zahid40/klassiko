@@ -19,7 +19,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCallback, useEffect, useState } from "react";
 import { ClassType } from "@/features/class/types/class.type";
-import { useUser } from "@/context/UserContext";
+import { useUser } from "@/components/providers/user-provider";
 import { toast } from "sonner";
 import { Skeleton } from "./ui/skeleton";
 import { useRouter, useSearchParams } from "next/navigation";

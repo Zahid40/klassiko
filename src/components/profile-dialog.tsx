@@ -20,7 +20,7 @@ import {
   ChevronsUpDown,
   LogOut,
 } from "lucide-react";
-import { useUser } from "@/context/UserContext";
+import { useUser } from "@/components/providers/user-provider";
 import { format, formatDistance, subDays } from "date-fns";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";

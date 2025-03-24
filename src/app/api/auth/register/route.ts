@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { UserSchema } from "@/features/user/schema/user.schema";
+import { UserSchema } from "@/schema/user.schema";
 import bcrypt from "bcryptjs";
 import supabase from "@/lib/db";
 import { ApiResponseType } from "@/types/app.type";

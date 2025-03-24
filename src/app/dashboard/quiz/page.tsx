@@ -1,33 +1,54 @@
 "use client";
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { getQuiz } from "@/actions/quiz.action";
 import { Button } from "@/components/ui/button";
-import UnifiedPagination from "@/features/app/components/unified-pagination";
 import { QuizType } from "@/types/type";
 import Link from "next/link";
-import { useUser } from "@/context/UserContext";
+import { useUser } from "@/components/providers/user-provider";
+import { ArrowRight2, Clock } from "iconsax-react";
 
 export default function QuizPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const { user } = useUser();
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  // Read page/pageSize from URL or fallback to 1 / 10
-  const currentPage = parseInt(searchParams.get("page") || "1", 10);
-  const pageSize = parseInt(searchParams.get("pageSize") || "10", 10);
-
-  // Fetch quizzes with react-query
-  const { data, error, isLoading } = useQuery({
-    queryKey: ["quizzes", currentPage, pageSize, user?.id],
-    queryFn: () =>
-      getQuiz(currentPage, pageSize),
-    enabled: !!user?.id, // Only fetch if user ID is available
+  // Fetch quizzes with infinite scroll using cursor-based pagination
+  const {
+    data,
+    error,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["quizzes", user?.id],
+    queryFn: ({ pageParam }) => getQuiz(5, pageParam, undefined, user?.id),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore
+        ? lastPage.data[lastPage.data.length - 1]?.id
+        : undefined,
+    enabled: !!user?.id,
   });
 
-  const quizzes = data?.data ?? [];
-  const total = data?.total ?? 0;
+  const quizzes = data?.pages.flatMap((page:any) => page.data) ?? [];
+
+  // Infinite scroll trigger setup
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) fetchNextPage();
+      },
+      { threshold: 1.0 }
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -49,19 +70,38 @@ export default function QuizPage() {
             {quizzes.map((q: QuizType) => (
               <div
                 key={q.id}
-                className="p-4 border rounded-md text-sm relative flex flex-col gap-2"
+                className="p-4 border rounded-md text-sm relative flex flex-row justify-between items-center gap-2"
               >
-                <p>{q.quiz_name}</p>
+                <div className="space-y-2">
+                  <p className="text-lg">{q.quiz_name}</p>
+                  <p className="text-sm">{q.questions.length} Questions</p>
+                  {q.duration && (
+                    <p className="text-xs flex gap-1 items-center">
+                      <Clock size={16} />
+                      {q.duration} mins
+                    </p>
+                  )}
+                </div>
+                <Button asChild>
+                  <Link href={`/dashboard/quiz/start/${q.id}/${user?.id}`}>
+                    Start Quiz
+                    <ArrowRight2 />
+                  </Link>
+                </Button>
               </div>
             ))}
           </div>
         ) : (
           <p className="text-center text-gray-500">No quizzes found.</p>
         )}
-      </div>
 
-      {/* Pagination Component */}
-      <UnifiedPagination total={total} />
+        {/* Infinite Scroll Trigger */}
+        {hasNextPage && (
+          <div ref={loadMoreRef} className="h-10 mt-4 text-center">
+            {isFetchingNextPage ? "Loading more quizzes..." : "Load more..."}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

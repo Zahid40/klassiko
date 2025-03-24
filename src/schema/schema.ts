@@ -5,7 +5,7 @@ export const quizSchema = z.object({
   quiz_name: z.string().nonempty(), // Name of the quiz
   class_id: z.string().uuid(),
   teacher_id: z.string().uuid(),
-  duration: z.number().int(),
+  duration: z.number().int().optional(),
   scheduled_at: z.date().optional(),
   created_at: z.date(),
   updated_at: z.date(),
@@ -13,7 +13,7 @@ export const quizSchema = z.object({
 });
 
 export const questionSchema = z.object({
-  id: z.number().int(), // Auto-generated ID
+  id: z.string(), // Auto-generated ID
   teacher_id: z.string().uuid(), // UUID of the teacher
   question_type: z.string().min(1, "Question type is required"),
   question_text: z.string().min(1, "Question is required"),
@@ -39,4 +39,24 @@ export const classSchema = z.object({
   teacher_id: z.string().uuid(),
   created_at: z.date(),
   updated_at: z.date(),
+});
+
+export const paperSchema = z.object({
+  id: z.string().uuid(), // Auto-generated ID
+  title: z.string().nonempty(), // Title of the paper
+  questions: z
+    .array(
+      z.object({
+        // Array of questions in JSON format
+        id: z.string().uuid(),
+        marks: z.number().int().default(1), // Marks for the question
+      })
+    )
+    .nonempty(), // Ensure at least one question is present
+  teacher_id: z.string().uuid(), // UUID of the teacher
+  class_id: z.string().uuid(), // UUID of the associated class
+  duration: z.number().int().default(0), // Duration of the paper in seconds
+  scheduled_at: z.date().optional(), // Scheduled date and time for the paper
+  created_at: z.date(), // Timestamp of creation
+  updated_at: z.date(), // Timestamp of last update
 });

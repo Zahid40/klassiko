@@ -26,8 +26,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "./ui/button";
-import { useUser } from "@/context/UserContext";
-import ProfileDialog from "@/features/user/components/profile-dialog";
+import { useUser } from "@/components/providers/user-provider";
+import ProfileDialog from "@/components/profile-dialog";
 
 export function NavUser({
   user,

@@ -1,4 +1,5 @@
 "use client";
+
 import { useUser } from "@/components/providers/user-provider";
 import supabase from "@/lib/db";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,74 +29,84 @@ import { Button } from "@/components/ui/button";
 import { ClassType, QuestionType } from "@/types/type";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { getClass } from "@/actions/class.action";
-import { createQuiz } from "@/actions/quiz.action";
 import { formatDistance, subDays } from "date-fns";
 import { TickCircle } from "iconsax-react";
 import { cn } from "@/lib/utils";
-import {
-  DndContext,
-  closestCenter,
-  useSensor,
-  useSensors,
-  PointerSensor,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable,
-  arrayMove,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { quizSchema } from "@/schema/schema";
+import { paperSchema } from "@/schema/schema";
+import { Badge } from "@/components/ui/badge";
+import { Asterisk, SquareStack } from "lucide-react";
+import { createPaper } from "@/actions/paper.action";
+import { useRouter } from "next/navigation";
 
-// Schema
-const formSchema = quizSchema.pick({
-  quiz_name: true,
+// Paper form schema
+const formSchema = paperSchema.pick({
+  title: true,
   questions: true,
   class_id: true,
   duration: true,
   scheduled_at: true,
 });
 
-// Draggable Question Component
-function DraggableQuestion({ question }: { question: QuestionType }) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: question.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
+// Draggable Question Component with Marks Input
+function DraggableQuestion({
+  question,
+  marks,
+  setMarks,
+}: {
+  question: QuestionType;
+  marks: number;
+  setMarks: (id: string, value: number) => void;
+}) {
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className="p-4 border rounded-md text-sm flex flex-col gap-2 cursor-grab"
-    >
-      <p className="text-base">{question.question_text}</p>
-      <div className="grid grid-cols-2 gap-2">
-        {question.options?.map((option) => {
-          const isCorrect =
-            option.toLowerCase() === question.correct_answer.toLowerCase();
-          return (
-            <p
-              key={option}
-              className={cn(
-                "text-xs flex gap-2 items-center",
-                isCorrect ? "text-green-600" : "text-neutral-700"
-              )}
-            >
-              {option}
-              {isCorrect && <TickCircle size={14} />}
-            </p>
-          );
+    <div className="p-4 border rounded-md flex flex-col gap-2 relative">
+      {/* Time since creation */}
+      <p className="text-[9px] absolute bottom-2 right-2">
+        {formatDistance(subDays(new Date(question.created_at), 0), new Date(), {
+          addSuffix: true,
         })}
+      </p>
+
+      {/* Question Text */}
+      <p className="text-base ">{question.question_text}</p>
+
+      {/* Options / Answer */}
+      {question.options?.length ? (
+        <div className="grid grid-cols-2 gap-2">
+          {question.options.map((option) => {
+            const isCorrect =
+              option.toLowerCase() === question.correct_answer.toLowerCase();
+            return (
+              <p
+                key={option + "_ans"}
+                className={cn(
+                  "text-xs flex gap-2 items-center",
+                  isCorrect ? "text-green-600" : "text-neutral-700 "
+                )}
+              >
+                {option}
+                {isCorrect && <TickCircle size={14} />}
+              </p>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-xs">{question.correct_answer}</p>
+      )}
+
+      {/* Marks Input */}
+      <div className="flex gap-2 items-center">
+        <p className="text-sm">Marks</p>
+        <Input
+          type="number"
+          value={marks}
+          onChange={(e) => setMarks(question.id, Number(e.target.value))}
+          className="w-20 text-sm"
+          placeholder="Marks"
+        />
       </div>
-      <p className="text-[9px] text-gray-500 mt-1">
+
+      {/* Time since creation */}
+      <p className="text-[9px] font-normal absolute bottom-2 right-2">
         {formatDistance(subDays(new Date(question.created_at), 0), new Date(), {
           addSuffix: true,
         })}
@@ -104,17 +115,19 @@ function DraggableQuestion({ question }: { question: QuestionType }) {
   );
 }
 
-// Main Component
-export default function CreateQuizPage() {
+// Main Paper Creation Component
+export default function CreatePaperPage() {
   const { user } = useUser();
   if (!user) return null;
-  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
-  const sensors = useSensors(useSensor(PointerSensor));
+  const router = useRouter();
+  const [selectedQuestions, setSelectedQuestions] = useState<
+    { id: string; marks: number }[]
+  >([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      quiz_name: "",
+      title: "",
       class_id: "",
       duration: 0,
       scheduled_at: undefined,
@@ -122,36 +135,35 @@ export default function CreateQuizPage() {
     },
   });
 
-  // Fetch classes
+  // Fetch Classes
   const { data: classData, isLoading: classLoading } = useQuery({
     queryKey: ["classes", user.id],
     queryFn: () => getClass(user.id),
   });
 
-  // Fetch questions
+  // Fetch Questions
   const { data: questionData, isLoading: questionLoading } = useQuery({
     queryKey: ["questions"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("questions")
-        .select("*")
-        .eq("question_type", "multiple_choice");
+      const { data, error } = await supabase.from("questions").select("*");
       if (error) throw new Error(error.message);
       return data || [];
     },
   });
 
+  // Mutation for creating paper
   const { mutate, isPending } = useMutation({
-    mutationFn: (values: z.infer<typeof formSchema>) =>
-      createQuiz(values, user?.id!),
+    mutationFn: async (values: z.infer<typeof formSchema>) =>
+      createPaper(values, user?.id!),
     onSuccess: () => {
-      toast.success("Question added successfully!");
+      toast.success("Paper created successfully!");
       form.reset();
+      router.replace(`/dashboard/paper`);
     },
     onError: (error: any) => {
       console.error("Submission error:", error);
       toast.error(
-        error.message || "Failed to submit the form. Please try again."
+        error.message || "Failed to create the paper. Please try again."
       );
     },
   });
@@ -162,25 +174,23 @@ export default function CreateQuizPage() {
 
   // Submit Handler
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log({ ...values, questions: selectedQuestions });
-    mutate(values);
+    mutate({ ...values, questions: selectedQuestions });
   };
 
-  // Handle Drag End
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (active.id !== over?.id) {
-      const oldIndex = selectedQuestions.indexOf(active.id as string);
-      const newIndex = selectedQuestions.indexOf(over?.id as string);
-
-      setSelectedQuestions((prev) => arrayMove(prev, oldIndex, newIndex));
-    }
-  };
-
-  // Toggle Question Selection
+  // Toggle Question Selection with default marks
   const toggleQuestion = (id: string) => {
+    setSelectedQuestions((prev) => {
+      const existing = prev.find((q) => q.id === id);
+      return existing
+        ? prev.filter((q) => q.id !== id)
+        : [...prev, { id, marks: 1 }];
+    });
+  };
+
+  // Update Marks for a selected question
+  const setMarks = (id: string, value: number) => {
     setSelectedQuestions((prev) =>
-      prev.includes(id) ? prev.filter((qId) => qId !== id) : [...prev, id]
+      prev.map((q) => (q.id === id ? { ...q, marks: value } : q))
     );
   };
 
@@ -196,15 +206,15 @@ export default function CreateQuizPage() {
             )}
             className="space-y-6 py-6"
           >
-            {/* Quiz Name */}
+            {/* Paper Title */}
             <FormField
               control={form.control}
-              name="quiz_name"
+              name="title"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <Input
-                      placeholder="Enter quiz name"
+                      placeholder="Enter paper title"
                       {...field}
                       className="text-3xl border-none shadow-none focus-visible:ring-0"
                     />
@@ -213,6 +223,13 @@ export default function CreateQuizPage() {
                 </FormItem>
               )}
             />
+
+            <div>
+              <p className="text-sm">
+                Total Marks :{" "}
+                {selectedQuestions.reduce((acc, curr) => acc + curr.marks, 0)}
+              </p>
+            </div>
 
             {/* Class Selection */}
             <FormField
@@ -298,32 +315,25 @@ export default function CreateQuizPage() {
               />
             </div>
 
-            {/* Selected Questions (Drag & Drop) */}
+            {/* Questions Section */}
             <h2 className="text-lg font-semibold mb-2">Selected Questions</h2>
-
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={selectedQuestions}
-                strategy={verticalListSortingStrategy}
-              >
-                {selectedQuestions.map((id) => {
-                  const question = questionData?.find((q) => q.id === id);
-                  return (
-                    question && (
-                      <DraggableQuestion key={id} question={question} />
-                    )
-                  );
-                })}
-              </SortableContext>
-            </DndContext>
+            {selectedQuestions.map(({ id, marks }) => {
+              const question = questionData?.find((q) => q.id === id);
+              return (
+                question && (
+                  <DraggableQuestion
+                    key={id}
+                    question={question}
+                    marks={marks}
+                    setMarks={setMarks}
+                  />
+                )
+              );
+            })}
 
             {/* Submit Button */}
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              Create Quiz
+            <Button type="submit" disabled={isPending}>
+              Create Paper
             </Button>
           </form>
         </Form>
@@ -335,7 +345,9 @@ export default function CreateQuizPage() {
           <div
             key={question.id}
             className={`p-4 border rounded-md cursor-pointer ${
-              selectedQuestions.includes(question.id) ? "bg-green-100" : ""
+              selectedQuestions.some((q) => q.id === question.id)
+                ? "bg-green-100"
+                : ""
             }`}
             onClick={() => toggleQuestion(question.id)}
           >

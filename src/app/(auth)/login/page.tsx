@@ -17,7 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import Logo from "../../../components/Logo";
-import { useUser } from "@/context/UserContext";
+import { useUser } from "@/components/providers/user-provider";
 
 // Improved schema with additional validation rules
 const formSchema = z.object({

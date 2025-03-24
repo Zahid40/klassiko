@@ -1,5 +1,5 @@
 "use client"
-import { useUser } from '@/context/UserContext'
+import { useUser } from '@/components/providers/user-provider'
 import React from 'react'
 
 export default function Dashboard() {

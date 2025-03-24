@@ -46,8 +46,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useUser } from "@/context/UserContext";
-import ProfileDialog from "@/features/user/components/profile-dialog";
+import { useUser } from "@/components/providers/user-provider";
+import ProfileDialog from "@/components/profile-dialog";
 import { toast } from "sonner";
 import { ClassType } from "@/features/class/types/class.type";
 import Link from "next/link";

@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { UserType } from "@/features/user/types/user.type";
+import { UserType } from "@/types/user.type";
 import { ApiResponseType } from "@/types/app.type";
 
 // Define Context Type
