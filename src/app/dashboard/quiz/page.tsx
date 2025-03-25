@@ -23,7 +23,8 @@ export default function QuizPage() {
     isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey: ["quizzes", user?.id],
-    queryFn: ({ pageParam }) => getQuiz(5, pageParam, undefined, user?.id),
+    queryFn: ({ pageParam }) =>
+      getQuiz(undefined, 5, pageParam, undefined, user?.id),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore
@@ -32,7 +33,7 @@ export default function QuizPage() {
     enabled: !!user?.id,
   });
 
-  const quizzes = data?.pages.flatMap((page:any) => page.data) ?? [];
+  const quizzes = data?.pages.flatMap((page: any) => page.data) ?? [];
 
   // Infinite scroll trigger setup
   useEffect(() => {
@@ -83,7 +84,7 @@ export default function QuizPage() {
                   )}
                 </div>
                 <Button asChild>
-                  <Link href={`/dashboard/quiz/start/${q.id}/${user?.id}`}>
+                  <Link href={`/quiz/start/${q.id}`}>
                     Start Quiz
                     <ArrowRight2 />
                   </Link>

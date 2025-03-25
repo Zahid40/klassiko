@@ -38,7 +38,7 @@ export default function Page({ params }: { params: { id: string } }) {
       {/* A4 Paper View */}
       <div
         ref={contentRef}
-        className="w-[210mm] h-[297mm] p-8 bg-white border shadow-lg relative"
+        className="w-[210mm] h-[297mm] p-12 bg-white border relative"
       >
         {/* Paper Title */}
         <h1 className="text-3xl font-bold mb-4 text-center">{paper.title}</h1>
@@ -79,7 +79,7 @@ export default function Page({ params }: { params: { id: string } }) {
                     <span>Q{index + 1} :</span>{" "}
                     {q.detail?.question_text || "No question text"}
                   </p>
-                  <ol className="flex flex-wrap gap-4 list-decimal text-xs  text-neutral-700 list-inside">
+                  <ol className="flex flex-wrap gap-4 list-[lower-alpha] text-xs  text-neutral-700 list-inside">
                     {q.detail?.options?.map((option) => {
                       return (
                         <li
@@ -91,7 +91,7 @@ export default function Page({ params }: { params: { id: string } }) {
                     })}
                   </ol>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-nowrap text-gray-600">
                   Marks: <strong>{q.marks ?? 0}</strong>
                 </p>
               </div>

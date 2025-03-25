@@ -5,33 +5,63 @@ import { QuizType } from "@/types/type";
 import { z } from "zod";
 
 export const getQuiz = async (
+  id?: string,
   limit: number = 10,
   cursor?: number,
   classId?: string,
   teacherId?: string
 ): Promise<{ data: QuizType[]; hasMore: boolean }> => {
-  // Start building the base query
-  let query = supabase.from("quiz").select("*").limit(limit);
+  try {
+    let query = supabase.from("quiz").select("*");
 
-  // Apply cursor-based pagination (fetch next batch after the last item)
-  if (cursor) query = query.gt("id", cursor); // `gt` means "greater than" the last ID
+    // If an ID is provided, fetch only that quiz
+    if (id) {
+      const { data, error } = await query.eq("id", id).single();
+      if (error) throw new Error(error.message);
+      return { data: data ? [data] : [], hasMore: false };
+    }
 
-  // Apply optional filters
-  if (classId) query = query.eq("class_id", classId);
-  if (teacherId) query = query.eq("teacher_id", teacherId);
+    // Fallback to paginated query if no ID is provided
+    query = query.limit(limit);
 
-  // Order by creation or ID to maintain consistency
-  query = query.order("id", { ascending: true });
+    if (cursor) query = query.gt("id", cursor);
+    if (classId) query = query.eq("class_id", classId);
+    if (teacherId) query = query.eq("teacher_id", teacherId);
 
-  const { data, error } = await query;
+    query = query.order("id", { ascending: true });
 
-  if (error) throw new Error(error.message);
+    const { data, error } = await query;
 
-  // Determine if there are more items to load (less than limit means no more data)
-  const hasMore = data.length === limit;
+    if (error) throw new Error(error.message);
 
-  return { data: data || [], hasMore };
+    const hasMore = data.length === limit;
+
+    return { data: data || [], hasMore };
+  } catch (error) {
+    console.error("Error fetching quiz:", error);
+    return { data: [], hasMore: false };
+  }
 };
+
+export const fetchQuizWithQuestions = async (quizId: string) => {
+  const { data: quiz, error: quizError } = await supabase
+    .from("quiz")
+    .select("*")
+    .eq("id", quizId)
+    .single();
+
+  if (quizError || !quiz) throw new Error("Quiz not found");
+
+  const { data: questions, error: questionsError } = await supabase
+    .from("questions")
+    .select("*")
+    .in("id", quiz.questions);
+
+  if (questionsError) throw new Error("Failed to load questions");
+
+  return { ...quiz, questions };
+};
+
 
 
 const quizForm = quizSchema.pick({
