@@ -36,6 +36,7 @@ import { useUser } from "@/components/providers/user-provider";
 import { questionSchema } from "@/schema/schema";
 import { useMutation } from "@tanstack/react-query";
 import { addQuestion } from "@/actions/question.action";
+import { cn } from "@/lib/utils";
 
 const formSchema = questionSchema.pick({
   question_type: true,
@@ -45,10 +46,12 @@ const formSchema = questionSchema.pick({
 });
 
 interface AddQuestionDialogProps {
-  onSuccess: () => void;
+  className?: string;
+  onSuccess?: () => void; // ✅ Pass this to refresh classes after adding
 }
 
 export default function AddQuestionDialog({
+  className,
   onSuccess,
 }: AddQuestionDialogProps) {
   const { user } = useUser();
@@ -72,7 +75,7 @@ export default function AddQuestionDialog({
       addQuestion(values, user?.id!),
     onSuccess: () => {
       toast.success("Question added successfully!");
-      onSuccess();
+      onSuccess?.();
       form.reset();
       setIsDialogOpen(false);
     },
@@ -91,7 +94,7 @@ export default function AddQuestionDialog({
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button className={cn(className, "")}>
           <Add size={42} />
           Add Question
         </Button>

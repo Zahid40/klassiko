@@ -67,3 +67,4 @@ export const paperSchema = z.object({
   created_at: z.date(), // Timestamp of creation
   updated_at: z.date(), // Timestamp of last update
 });
+

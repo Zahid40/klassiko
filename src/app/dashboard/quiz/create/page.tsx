@@ -2,7 +2,7 @@
 import { useUser } from "@/components/providers/user-provider";
 import supabase from "@/lib/db";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -26,7 +26,7 @@ import {
 import { SmartDatetimeInput } from "@/components/ui/smart-datetime-input";
 import { Button } from "@/components/ui/button";
 import { ClassType, QuestionType } from "@/types/type";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { getClass } from "@/actions/class.action";
 import { createQuiz } from "@/actions/quiz.action";
 import { formatDistance, subDays } from "date-fns";
@@ -48,6 +48,10 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { quizSchema } from "@/schema/schema";
+import { getQuestions } from "@/actions/question.action";
+import { Loader2 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import AddQuestionDialog from "@/components/add-question-dialog";
 
 // Schema
 const formSchema = quizSchema.pick({
@@ -109,13 +113,14 @@ export default function CreateQuizPage() {
   const { user } = useUser();
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const sensors = useSensors(useSensor(PointerSensor));
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       quiz_name: "",
       class_id: "",
-      duration: 0,
+      duration: 30,
       scheduled_at: undefined,
       questions: selectedQuestions,
     },
@@ -125,8 +130,8 @@ export default function CreateQuizPage() {
   const {
     data: classData,
     isLoading: classLoading,
-    isError,
-    error,
+    isError: isClassError,
+    error: classError,
   } = useQuery({
     queryKey: ["classes", user?.id, user?.role],
     queryFn: () =>
@@ -138,17 +143,34 @@ export default function CreateQuizPage() {
   });
 
   // Fetch questions
-  const { data: questionData, isLoading: questionLoading } = useQuery({
-    queryKey: ["questions"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("questions")
-        .select("*")
-        .eq("question_type", "multiple_choice");
-      if (error) throw new Error(error.message);
-      return data || [];
-    },
+  // Infinite Scroll Query Setup
+  const {
+    data,
+    isLoading: questionLoading,
+    isError: isQuestionError,
+    error: questionError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch: refetchQuestions,
+  } = useInfiniteQuery({
+    queryKey: ["questions", user?.id],
+    queryFn: ({ pageParam = 0 }) =>
+      getQuestions({
+        limit: 10,
+        cursor: pageParam,
+        userId: user?.id!,
+        role: user?.role!,
+        isQuiz: true,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.questions.at(-1)?.id : undefined,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
+
+  const questionData = data?.pages.flatMap((page: any) => page.questions) || [];
 
   const { mutate, isPending } = useMutation({
     mutationFn: (values: z.infer<typeof formSchema>) =>
@@ -164,6 +186,22 @@ export default function CreateQuizPage() {
       );
     },
   });
+
+  // Scroll Observer for "Load More"
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) fetchNextPage();
+      },
+      { threshold: 1.0 }
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   useEffect(() => {
     form.setValue("questions", selectedQuestions);
@@ -340,17 +378,53 @@ export default function CreateQuizPage() {
 
       {/* Question List */}
       <div className="flex-1 space-y-2">
-        {questionData?.map((question: QuestionType) => (
-          <div
-            key={question.id}
-            className={`p-4 border rounded-md cursor-pointer ${
-              selectedQuestions.includes(question.id) ? "bg-green-100" : ""
-            }`}
-            onClick={() => toggleQuestion(question.id)}
-          >
-            {question.question_text}
-          </div>
-        ))}
+        <h3 className="text-center font-semibold text-primary-400">
+          Questions ( Multiple Choice )
+        </h3>
+        <ScrollArea className=" space-y-2 max-h-[70vh] min-h-[70vh] h-[70vh] border p-4 rounded-lg">
+          {questionLoading ? (
+            <p className="text-center text-gray-500">Loading questions...</p>
+          ) : questionData.length > 0 ? (
+            <div className="space-y-2">
+              {questionData?.map((question: QuestionType) => (
+                <div
+                  key={question.id}
+                  className={`p-4 border rounded-md cursor-pointer ${
+                    selectedQuestions.includes(question.id)
+                      ? "bg-green-100"
+                      : ""
+                  }`}
+                  onClick={() => toggleQuestion(question.id)}
+                >
+                  {question.question_text}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500">No questions found.</p>
+          )}
+
+          {/* Infinite Scroll Load More Trigger */}
+          {hasNextPage && (
+            <div ref={loadMoreRef} className="h-10 mt-4 text-center">
+              {isFetchingNextPage ? (
+                <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+              ) : (
+                "Load more..."
+              )}
+            </div>
+          )}
+
+          {/* Show end message when done */}
+          {!hasNextPage && questionData.length > 0 && (
+            <p className="text-center text-gray-500 mt-4">
+              You have reached the end!
+            </p>
+          )}
+        </ScrollArea>
+        <div>
+          <AddQuestionDialog onSuccess={refetchQuestions} className="w-full" />
+        </div>
       </div>
     </section>
   );

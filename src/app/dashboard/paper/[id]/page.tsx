@@ -31,6 +31,16 @@ export default function Page({ params }: { params: { id: string } }) {
     return <p className="text-red-500 text-center mt-8">Error loading paper</p>;
   }
 
+  const formatTime = (time: number) => {
+    const hours = Math.floor(time / 3600);
+    const minutes = Math.floor((time % 3600) / 60);
+    const seconds = time % 60;
+    return `${hours > 0 ? `${hours} min ` : ""}${
+      minutes > 0 ? `${minutes} min` : ""
+    } ${seconds.toString().padStart(2, "0")} sec`;
+  };
+  const formattedTime = formatTime(paper.duration as number);
+
   return (
     <div className="p-4 flex flex-col items-center gap-4">
       <ExportButton contentRef={contentRef} label="Download as PDF" />
@@ -50,7 +60,7 @@ export default function Page({ params }: { params: { id: string } }) {
           </p>
           {paper.duration !== 0 && (
             <p>
-              Duration: <span>{paper.duration} minutes</span>
+              Duration: <span>{formattedTime}</span>
             </p>
           )}
           <p>
@@ -83,7 +93,8 @@ export default function Page({ params }: { params: { id: string } }) {
                     {q.detail?.options?.map((option) => {
                       return (
                         <li
-                          key={option + "_ans"} className="basis-1/3 text-nowrap px-2"
+                          key={option + "_ans"}
+                          className="basis-1/3 text-nowrap px-2"
                         >
                           {option}
                         </li>
@@ -105,7 +116,8 @@ export default function Page({ params }: { params: { id: string } }) {
         <footer className="absolute bottom-2 gap-4 text-center text-gray-500 text-[9px] flex justify-between">
           Paper ID: {paper.id}
           <p className="text-[9px] ">
-            Last updated at : {formatDistance(
+            Last updated at :{" "}
+            {formatDistance(
               subDays(new Date(paper.updated_at), 0),
               new Date(),
               { addSuffix: true }

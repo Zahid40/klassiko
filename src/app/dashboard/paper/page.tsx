@@ -1,5 +1,6 @@
 "use client";
 import { getPaper } from "@/actions/paper.action";
+import PaperCard from "@/components/paper-card";
 import { useUser } from "@/components/providers/user-provider";
 import { Button } from "@/components/ui/button";
 import { PaperType } from "@/types/type";
@@ -9,29 +10,36 @@ import Link from "next/link";
 import React, { useEffect, useRef } from "react";
 
 export default function PaperPage() {
-  const {user} = useUser();
+  const { user } = useUser();
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch quizzes with infinite scroll using cursor-based pagination
   const {
-    data,
-    error,
+    data: papersData,
     isLoading,
+    isError,
+    error,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["papers", user?.id],
-    queryFn: ({ pageParam }) => getPaper(5, pageParam,  user?.id),
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore
-        ? lastPage.data[lastPage.data.length - 1]?.id
-        : undefined,
+    queryKey: ["quizzes", user?.id],
+    queryFn: ({ pageParam = 0 }) =>
+      getPaper({
+        userId: user?.id!,
+        role: user?.role!,
+        limit: 5,
+        cursor: pageParam,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage?.hasMore ? allPages.length * 5 : undefined,
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
-  const quizzes = data?.pages.flatMap((page) => page.data) ?? [];
+  const papers = papersData?.pages.flatMap((page) => page.data) ?? [];
 
   // Infinite scroll trigger setup
   useEffect(() => {
@@ -68,30 +76,10 @@ export default function PaperPage() {
           <p className="text-center">Loading quizzes...</p>
         ) : error ? (
           <p className="text-center text-red-500">Failed to load quizzes.</p>
-        ) : quizzes.length > 0 ? (
+        ) : papers.length > 0 ? (
           <div className="space-y-2">
-            {quizzes.map((q: PaperType) => (
-              <div
-                key={q.id}
-                className="p-4 border rounded-md text-sm relative flex flex-row justify-between items-center gap-2"
-              >
-                <div className="space-y-2">
-                  <p className="text-lg">{q.title}</p>
-                  <p className="text-sm">{q.questions.length} Questions</p>
-                  {q.duration && (
-                    <p className="text-xs flex gap-1 items-center">
-                      <Clock size={16} />
-                      {q.duration} mins
-                    </p>
-                  )}
-                </div>
-                <Button asChild>
-                  <Link href={`/dashboard/paper/${q.id}`}>
-                    View Paper
-                    <ArrowRight2 />
-                  </Link>
-                </Button>
-              </div>
+            {papers.map((paper: PaperType) => (
+              <PaperCard paper={paper} key={paper.id} />
             ))}
           </div>
         ) : (

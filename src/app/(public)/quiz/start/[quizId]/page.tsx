@@ -20,7 +20,7 @@ import { useRouter } from "next/navigation";
 
 
 
-export default function page({ params }: { params: { quizId: string } }) {
+export default function Page({ params }: { params: { quizId: string } }) {
   const { user } = useUser();
   // if (!user) return null;
   const { quizId } = params;

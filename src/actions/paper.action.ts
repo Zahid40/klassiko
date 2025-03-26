@@ -4,42 +4,146 @@ import { PaperType, QuestionType } from "@/types/type";
 import { z } from "zod";
 
 export const getPaper = async ({
+  userId,
+  role,
   id,
   limit = 10,
   cursor,
   classId,
   teacherId,
+  withQuestions = false,
+  withClass = false,
+  withTeacher = false,
 }: {
+  userId: string;
+  role: "student" | "teacher" | "admin";
   id?: string;
   limit?: number;
-  cursor?: number;
+  cursor?: number; // Use created_at for pagination
   classId?: string;
   teacherId?: string;
+  withQuestions?: boolean;
+  withClass?: boolean;
+  withTeacher?: boolean;
 }): Promise<{ data: PaperType[]; hasMore: boolean }> => {
-  let query = supabase.from("paper").select("*");
+  try {
+    let query = supabase.from("paper").select("*");
 
-  // If an ID is provided, fetch only that paper
-  if (id) {
-    query = query.eq("id", id).single();
-  } else {
-    // Apply pagination and filters only when no ID is provided
-    if (cursor) query = query.gt("id", cursor);
+    // ✅ Fetch a specific paper by ID (all roles)
+    if (id) {
+      const { data, error } = await query.eq("id", id).single();
+      if (error) throw new Error(error.message);
+
+      // 🔒 Role-based validation
+      if (
+        (role === "student" && data.class_id !== classId) ||
+        (role === "teacher" && data.teacher_id !== userId)
+      ) {
+        throw new Error("You are not authorized to access this paper.");
+      }
+
+      return { data: data ? [data] : [], hasMore: false };
+    }
+
+    // ✅ Paginated query setup (using created_at for better pagination)
+    query = query.limit(limit);
+    if (cursor) query = query.gt("created_at", cursor); // ✅ Fixed
+
+    // 🔒 Role-based data filtering
+    if (role === "student") {
+      // Get enrolled classes
+      const { data: enrollments, error: enrollmentError } = await supabase
+        .from("class_enrollments")
+        .select("class_id")
+        .eq("student_id", userId);
+
+      if (enrollmentError || !enrollments.length)
+        throw new Error("Not enrolled in any classes.");
+
+      const enrolledClasses = enrollments.map((e) => e.class_id);
+      query = query.in("class_id", enrolledClasses);
+    } else if (role === "teacher") {
+      query = query.eq("teacher_id", userId);
+    }
+
+    // ✅ Optional filters for `classId` and `teacherId`
     if (classId) query = query.eq("class_id", classId);
-    if (teacherId) query = query.eq("teacher_id", teacherId);
+    if (teacherId && role === "admin")
+      query = query.eq("teacher_id", teacherId);
 
-    // Limit and order by ID for consistent pagination
-    query = query.limit(limit).order("id", { ascending: true });
+    query = query.order("created_at", { ascending: true });
+
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+
+    // ✅ Fetch questions if `withQuestions` is enabled
+    if (withQuestions && data.length > 0) {
+      const questionIds = data.flatMap((p) =>
+        p.questions ? p.questions.map((q: { id: any }) => q.id) : []
+      );
+
+      if (questionIds.length) {
+        const { data: questions, error: questionsError } = await supabase
+          .from("questions")
+          .select("*")
+          .in("id", questionIds);
+
+        if (questionsError) throw new Error("Failed to load questions");
+
+        // Attach questions to their respective paper
+        data.forEach((paper) => {
+          paper.questions = questions.filter((q) =>
+            paper.questions.some((q: { id: string; marks: number }) => ({
+              ...q,
+              detail:
+                questions.find((question) => question.id === q.id) || null,
+            }))
+          );
+        });
+      }
+    }
+
+    // // ✅ Fetch class data if `withClass` is enabled
+    // if (withClass) {
+    //   const classIds = [...new Set(data.map((p) => p.class_id))]; // ✅ Optimized
+    //   if (classIds.length) {
+    //     const { data: classes, error } = await supabase
+    //       .from("class")
+    //       .select("*")
+    //       .in("id", classIds);
+
+    //     if (!error) {
+    //       data.forEach((paper) => {
+    //         paper.classData = classes.find((c) => c.id === paper.class_id) || null; // ✅ Better naming
+    //       });
+    //     }
+    //   }
+    // }
+
+    // // ✅ Fetch teacher data if `withTeacher` is enabled
+    // if (withTeacher) {
+    //   const teacherIds = [...new Set(data.map((p) => p.teacher_id))]; // ✅ Optimized
+    //   if (teacherIds.length) {
+    //     const { data: teachers, error } = await supabase
+    //       .from("users")
+    //       .select("*")
+    //       .in("id", teacherIds);
+
+    //     if (!error) {
+    //       data.forEach((paper) => {
+    //         paper.teacherData =
+    //           teachers.find((t) => t.id === paper.teacher_id) || null; // ✅ Better naming
+    //       });
+    //     }
+    //   }
+    // }
+
+    const hasMore = data.length === limit;
+    return { data: data || [], hasMore };
+  } catch (error) {
+    console.error("Error fetching papers:", error);
+    return { data: [], hasMore: false };
   }
-
-  const { data, error } = await query;
-
-  if (error) throw new Error(error.message);
-
-  // For a single paper, return data as an array for consistency
-  const normalizedData = id ? (data ? [data] : []) : data || [];
-  const hasMore = !id && normalizedData.length === limit;
-
-  return { data: normalizedData, hasMore };
 };
 
 const quizForm = paperSchema.pick({

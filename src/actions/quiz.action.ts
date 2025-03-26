@@ -192,3 +192,117 @@ export const createQuizPerformance = async (
   if (error) throw new Error(error.message);
   return data;
 };
+
+export const getQuizPerformance = async ({
+  userId,
+  role,
+  quizPerformance_id,
+  limit = 10,
+  cursor,
+  classId,
+}: {
+  userId: string;
+  role: "student" | "teacher" | "admin";
+  quizPerformance_id?: string;
+  limit?: number;
+  cursor?: string;
+  classId?: string;
+}) => {
+  try {
+    let query = supabase.from("quiz_performance").select("*");
+
+    // ✅ Fetch a single quiz performance if `quizPerformance_id` is provided
+    if (quizPerformance_id) {
+      query = query.eq("id", quizPerformance_id);
+
+      if (role === "teacher") {
+        query = query.eq("teacher_id", userId);
+      } else if (role === "student") {
+        query = query.eq("student_id", userId);
+      }
+
+      const { data, error } = await query.single();
+      if (error) throw new Error("Quiz performance not found");
+
+      return { data };
+    }
+
+    // ✅ If role is "student", filter by user ID
+    if (role === "student") {
+      query = query.eq("student_id", userId);
+    }
+
+    // ✅ Apply pagination (infinite scroll)
+    if (cursor) query = query.gt("id", cursor);
+    query = query.order("id", { ascending: true }).limit(limit);
+
+    // ✅ Fetch quiz performance data
+    const { data: performances, error } = await query;
+    if (error) throw new Error("Failed to fetch quiz performances");
+
+    if (!performances || performances.length === 0)
+      return { data: [], hasMore: false, message: "No quizzes attempted" };
+
+    // ✅ Extract unique quiz IDs
+    const quizIds = performances.map((p) => p.quiz_id);
+
+    // ✅ Fetch quiz details (filtering by `classId` if provided)
+    let quizQuery = supabase.from("quiz").select("id, quiz_name, class_id");
+
+    if (classId) {
+      quizQuery = quizQuery.eq("class_id", classId);
+    }
+
+    const { data: quizzes, error: quizError } = await quizQuery.in(
+      "id",
+      quizIds
+    );
+    if (quizError) throw new Error("Failed to fetch quizzes");
+
+    // ✅ Only keep quiz performances for quizzes that belong to `classId`
+    const validQuizIds = quizzes.map((q) => q.id);
+    const filteredPerformances = performances.filter((p) =>
+      validQuizIds.includes(p.quiz_id)
+    );
+
+    // ✅ Fetch student details (only for teachers/admins)
+    let studentsMap: Record<string, { id: string; name: string }> = {};
+    if (role === "teacher" || role === "admin") {
+      const studentIds = filteredPerformances.map((p) => p.student_id);
+      const { data: students, error: studentError } = await supabase
+        .from("users")
+        .select("id, name")
+        .in("id", studentIds);
+
+      if (studentError) throw new Error("Failed to fetch students");
+
+      studentsMap = Object.fromEntries(students.map((s) => [s.id, s]));
+    }
+
+    // ✅ Structure the response: group attempts by quiz
+    const result = quizzes.map((quiz) => ({
+      id: quiz.id,
+      quiz_name: quiz.quiz_name,
+      attempts: filteredPerformances
+        .filter((p) => p.quiz_id === quiz.id)
+        .map((p) => ({
+          score: p.score,
+          student:
+            role === "teacher" || role === "admin"
+              ? studentsMap[p.student_id]
+              : undefined,
+        })),
+    }));
+
+    // ✅ Check if there are more records for pagination
+    const hasMore = filteredPerformances.length === limit;
+    const nextCursor = hasMore
+      ? filteredPerformances[filteredPerformances.length - 1].id
+      : null;
+
+    return { data: result, hasMore, nextCursor };
+  } catch (error) {
+    console.error("Error fetching quiz performance:", error);
+    return { data: [], hasMore: false, error: error };
+  }
+};

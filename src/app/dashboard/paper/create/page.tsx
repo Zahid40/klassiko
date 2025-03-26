@@ -3,7 +3,7 @@
 import { useUser } from "@/components/providers/user-provider";
 import supabase from "@/lib/db";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -27,16 +27,21 @@ import {
 import { SmartDatetimeInput } from "@/components/ui/smart-datetime-input";
 import { Button } from "@/components/ui/button";
 import { ClassType, QuestionType } from "@/types/type";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { getClass } from "@/actions/class.action";
 import { formatDistance, subDays } from "date-fns";
 import { TickCircle } from "iconsax-react";
 import { cn } from "@/lib/utils";
 import { paperSchema } from "@/schema/schema";
 import { Badge } from "@/components/ui/badge";
-import { Asterisk, SquareStack } from "lucide-react";
+import { Asterisk, Loader2, SquareStack } from "lucide-react";
 import { createPaper } from "@/actions/paper.action";
 import { useRouter } from "next/navigation";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { getQuestions } from "@/actions/question.action";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import AddQuestionDialog from "@/components/add-question-dialog";
 
 // Paper form schema
 const formSchema = paperSchema.pick({
@@ -57,8 +62,20 @@ function DraggableQuestion({
   marks: number;
   setMarks: (id: string, value: number) => void;
 }) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: question.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
   return (
-    <div className="p-4 border rounded-md flex flex-col gap-2 relative">
+    <div
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="p-4 border rounded-md text-sm flex flex-col gap-2 cursor-grab"
+    >
       {/* Time since creation */}
       <p className="text-[9px] absolute bottom-2 right-2">
         {formatDistance(subDays(new Date(question.created_at), 0), new Date(), {
@@ -104,13 +121,6 @@ function DraggableQuestion({
           placeholder="Marks"
         />
       </div>
-
-      {/* Time since creation */}
-      <p className="text-[9px] font-normal absolute bottom-2 right-2">
-        {formatDistance(subDays(new Date(question.created_at), 0), new Date(), {
-          addSuffix: true,
-        })}
-      </p>
     </div>
   );
 }
@@ -118,11 +128,11 @@ function DraggableQuestion({
 // Main Paper Creation Component
 export default function CreatePaperPage() {
   const { user } = useUser();
-  if (!user) return null;
   const router = useRouter();
   const [selectedQuestions, setSelectedQuestions] = useState<
     { id: string; marks: number }[]
   >([]);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -135,21 +145,50 @@ export default function CreatePaperPage() {
     },
   });
 
-  // Fetch Classes
-  const { data: classData, isLoading: classLoading } = useQuery({
-    queryKey: ["classes", user.id],
-    queryFn: () => getClass(user.id),
+  // Fetch classes
+  const {
+    data: classData,
+    isLoading: classLoading,
+    isError: isClassError,
+    error: classError,
+  } = useQuery({
+    queryKey: ["classes", user?.id, user?.role],
+    queryFn: () =>
+      getClass({
+        userId: user?.id!,
+        role: user?.role!,
+      }),
+    enabled: !!user,
   });
 
-  // Fetch Questions
-  const { data: questionData, isLoading: questionLoading } = useQuery({
-    queryKey: ["questions"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("questions").select("*");
-      if (error) throw new Error(error.message);
-      return data || [];
-    },
+  // Fetch questions
+  // Infinite Scroll Query Setup
+  const {
+    data,
+    isLoading: questionLoading,
+    isError: isQuestionError,
+    error: questionError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch: refetchQuestions,
+  } = useInfiniteQuery({
+    queryKey: ["questions", user?.id],
+    queryFn: ({ pageParam = 0 }) =>
+      getQuestions({
+        limit: 10,
+        cursor: pageParam,
+        userId: user?.id!,
+        role: user?.role!,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.questions.at(-1)?.id : undefined,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
+
+  const questionData = data?.pages.flatMap((page: any) => page.questions) || [];
 
   // Mutation for creating paper
   const { mutate, isPending } = useMutation({
@@ -167,6 +206,22 @@ export default function CreatePaperPage() {
       );
     },
   });
+
+  // Scroll Observer for "Load More"
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) fetchNextPage();
+      },
+      { threshold: 1.0 }
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   useEffect(() => {
     form.setValue("questions", selectedQuestions);
@@ -341,19 +396,53 @@ export default function CreatePaperPage() {
 
       {/* Question List */}
       <div className="flex-1 space-y-2">
-        {questionData?.map((question: QuestionType) => (
-          <div
-            key={question.id}
-            className={`p-4 border rounded-md cursor-pointer ${
-              selectedQuestions.some((q) => q.id === question.id)
-                ? "bg-green-100"
-                : ""
-            }`}
-            onClick={() => toggleQuestion(question.id)}
-          >
-            {question.question_text}
-          </div>
-        ))}
+        <h3 className="text-center font-semibold text-primary-400">
+          Questions ( Multiple Choice )
+        </h3>
+        <ScrollArea className=" space-y-2 max-h-[70vh] min-h-[70vh] h-[70vh] border p-4 rounded-lg">
+          {questionLoading ? (
+            <p className="text-center text-gray-500">Loading questions...</p>
+          ) : questionData.length > 0 ? (
+            <div className="space-y-2">
+              {questionData?.map((question: QuestionType) => (
+                <div
+                  key={question.id}
+                  className={`p-4 border rounded-md cursor-pointer ${
+                    selectedQuestions.some((q) => q.id === question.id)
+                      ? "bg-green-100"
+                      : ""
+                  }`}
+                  onClick={() => toggleQuestion(question.id)}
+                >
+                  {question.question_text}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500">No questions found.</p>
+          )}
+
+          {/* Infinite Scroll Load More Trigger */}
+          {hasNextPage && (
+            <div ref={loadMoreRef} className="h-10 mt-4 text-center">
+              {isFetchingNextPage ? (
+                <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+              ) : (
+                "Load more..."
+              )}
+            </div>
+          )}
+
+          {/* Show end message when done */}
+          {!hasNextPage && questionData.length > 0 && (
+            <p className="text-center text-gray-500 mt-4">
+              You have reached the end!
+            </p>
+          )}
+        </ScrollArea>
+        <div>
+          <AddQuestionDialog onSuccess={refetchQuestions} className="w-full" />
+        </div>
       </div>
     </section>
   );

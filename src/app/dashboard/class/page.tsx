@@ -9,13 +9,15 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { ClassType, QuizType } from "@/types/type";
-import { getQuiz } from "@/actions/quiz.action";
+import { getQuiz, getQuizPerformance } from "@/actions/quiz.action";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { ArrowRight2, Clock } from "iconsax-react";
 import { getClass } from "@/actions/class.action";
 import CopyButton from "@/components/CopyButton";
 import QuizCard from "@/components/quiz-card";
+import { getPaper } from "@/actions/paper.action";
+import PaperCard from "@/components/paper-card";
 
 export default function Class() {
   const searchParams = useSearchParams();
@@ -47,49 +49,66 @@ export default function Class() {
     data: quizzesData,
     isLoading: quizzesLoading,
     isError: quizzesError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
+  } = useQuery({
     queryKey: ["quizzes", classId, user?.id],
-    queryFn: ({ pageParam = 0 }) =>
+    queryFn: () =>
       getQuiz({
         userId: user?.id!,
         role: user?.role!,
         limit: 5,
-        cursor: pageParam,
         classId,
       }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) =>
-      lastPage?.hasMore ? allPages.length * 5 : undefined,
     enabled: !!classId && !!user?.id,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 
-  const quizzes = quizzesData?.pages.flatMap((page) => page.data) ?? [];
+  const {
+    data: quizPerData,
+    isLoading: quizPerLoading,
+    isError: quizPerError,
+  } = useQuery({
+    queryKey: ["quizPer", classId, user?.id],
+    queryFn: () =>
+      getQuizPerformance({
+        userId: user?.id!,
+        role: user?.role!,
+        limit: 5,
+        classId,
+      }),
+    enabled: !!classId && !!user?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
 
-  // Infinite Scroll Trigger
-  useEffect(() => {
-    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return;
+  // Infinite Scroll Fetch for Quizzes
+  const {
+    data: papersData,
+    isLoading: papersLoading,
+    isError: papersError,
+  } = useQuery({
+    queryKey: ["papers", classId, user?.id],
+    queryFn: () =>
+      getPaper({
+        userId: user?.id!,
+        role: user?.role!,
+        limit: 5,
+        classId,
+      }),
+    enabled: !!classId && !!user?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) fetchNextPage();
-      },
-      { threshold: 1.0 }
-    );
-
-    observer.observe(loadMoreRef.current);
-    return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const quizzes = quizzesData?.data;
+  const papers = papersData?.data;
+  const quiz_performance = quizPerData?.data;
 
   // Handle Errors
   useEffect(() => {
-    if (isError) toast.error((error as Error).message);
+    if (isError) toast.error(error.message);
     if (quizzesError) toast.error("Failed to load quizzes.");
-  }, [isError, quizzesError]);
+  }, [isError, quizzesError , error]);
 
   // Loading State for Class
   if (isLoading) {
@@ -131,33 +150,73 @@ export default function Class() {
         />
       </div>
 
-      {/* Quizzes Section */}
-      <div className="w-full ">
-        <h2 className="text-lg font-semibold mb-2">Quizzes</h2>
+      <div className="flex gap-4 w-full">
+        {/* Quizzes Section */}
 
-        {/* Show loading if quizzes are still fetching */}
-        {quizzesLoading && (
-          <p className="text-center text-gray-500">Loading quizzes...</p>
+        <div className="w-full ">
+          <h2 className="text-lg font-semibold mb-2">Quizzes</h2>
+
+          {/* Show loading if quizzes are still fetching */}
+          {quizzesLoading && (
+            <p className="text-center text-gray-500">Loading quizzes...</p>
+          )}
+
+          {/* Render quizzes */}
+          {quizzes?.length ? (
+            quizzes.map((q) => <QuizCard quiz={q} key={q.id} />)
+          ) : (
+            <p className="text-sm text-gray-500">No quizzes available yet.</p>
+          )}
+        </div>
+
+        <div className="w-full">
+  <h2 className="text-lg font-semibold mb-2">Quiz Attempts</h2>
+
+  {/* Show loading if quizzes are still fetching */}
+  {quizPerLoading && (
+    <p className="text-center text-gray-500">Loading quiz performance...</p>
+  )}
+
+  {/* Render quizzes */}
+  {quiz_performance?.length ? (
+    quiz_performance.map((quiz: any) => (
+      <div key={quiz.id} className="mb-4 border p-3 rounded-md">
+        <h3 className="text-md font-medium">{quiz.quiz_name}</h3>
+
+        {/* Show attempts & scores */}
+        {quiz.attempts.length ? (
+          <ul className="list-disc list-inside mt-1 text-sm text-gray-600">
+            {quiz.attempts.map((attempt: any, index: number) => (
+              <li key={index}>
+                Score: {attempt.score}
+                {attempt.student && (
+                  <span className="ml-2 text-gray-400">({attempt.student.name})</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-gray-500">No attempts yet.</p>
         )}
+      </div>
+    ))
+  ) : (
+    <p className="text-sm text-gray-500">No quiz performance available yet.</p>
+  )}
+</div>
 
-        {/* Render quizzes */}
-        {quizzes.length ? (
-          quizzes.map((q) => (
-            <QuizCard quiz={q} key={q.id} />
-          ))
+      </div>
+
+      <div className="w-full ">
+        <h2 className="text-lg font-semibold mb-2">Papers</h2>
+
+        {papersLoading && (
+          <p className="text-center text-gray-500">Loading papers....</p>
+        )}
+        {papers?.length ? (
+          papers.map((p) => <PaperCard paper={p} key={p.id} />)
         ) : (
           <p className="text-sm text-gray-500">No quizzes available yet.</p>
-        )}
-
-        {/* Infinite Scroll Load More Trigger */}
-        {hasNextPage && (
-          <div ref={loadMoreRef} className="h-10 mt-4 text-center">
-            {isFetchingNextPage ? (
-              <Loader2 className="w-5 h-5 animate-spin mx-auto" />
-            ) : (
-              "Load more..."
-            )}
-          </div>
         )}
       </div>
     </div>

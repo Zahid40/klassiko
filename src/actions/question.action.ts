@@ -10,6 +10,7 @@ interface GetQuestionsParams {
   cursor?: number; // ✅ Use last item ID as cursor for infinite scroll
   userId: string;
   role: "student" | "teacher" | "admin";
+  isQuiz?: boolean;
 }
 
 /**
@@ -20,6 +21,7 @@ export const getQuestions = async ({
   cursor,
   userId,
   role,
+  isQuiz,
 }: GetQuestionsParams): Promise<{
   questions: QuestionType[];
   hasMore: boolean;
@@ -35,6 +37,8 @@ export const getQuestions = async ({
 
     // 🔒 Role-based filtering
     if (role === "teacher") query = query.eq("teacher_id", userId);
+
+    if (isQuiz) query = query.eq("question_type", "multiple_choice");
 
     // ✅ Cursor-based pagination for infinite scroll
     if (cursor) query = query.gt("id", cursor);

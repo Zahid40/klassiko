@@ -41,7 +41,7 @@ export default function QuestionPage() {
     retry: 1,
   });
 
-  const questions = data?.pages.flatMap((page) => page.questions) || [];
+  const questions = data?.pages.flatMap((page:any) => page.questions) || [];
 
   // Scroll Observer for "Load More"
   useEffect(() => {
@@ -170,7 +170,7 @@ export default function QuestionPage() {
         {/* Show end message when done */}
         {!hasNextPage && questions.length > 0 && (
           <p className="text-center text-gray-500 mt-4">
-            You've reached the end!
+            You have reached the end!
           </p>
         )}
       </div>
