@@ -1,48 +1,70 @@
 "use client";
-import UnifiedPagination from "@/components/unified-pagination";
-import { useSearchParams } from "next/navigation";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Asterisk, SquareStack } from "lucide-react";
+import { Asterisk, SquareStack, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TickCircle } from "iconsax-react";
 import { formatDistance, subDays } from "date-fns";
 import AddQuestionDialog from "@/components/add-question-dialog";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { getQuestions } from "@/actions/question.action";
 import { QuestionType } from "@/types/type";
 import { useUser } from "@/components/providers/user-provider";
 
 export default function QuestionPage() {
-  const searchParams = useSearchParams();
-  const {user} = useUser()
+  const { user } = useUser();
+  const loadMoreRef = useRef<HTMLDivElement>(null); // Ref for load more trigger
 
-  // Read page/pageSize from URL, or default to 1 / 10
-  const pageParam = searchParams.get("page");
-  const pageSizeParam = searchParams.get("pageSize");
-  const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
-  const pageSize = pageSizeParam ? parseInt(pageSizeParam, 10) : 10;
-
-  // React Query - Fetch questions
+  // Infinite Scroll Query Setup
   const {
     data,
     isLoading,
     isError,
     error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     refetch,
-  } = useQuery({
-    queryKey: ["questions", currentPage, pageSize],
-    queryFn: () => getQuestions(currentPage, pageSize , user?.id!),
-    staleTime: 1000 * 60 * 5, // Cache data for 5 minutes
+  } = useInfiniteQuery({
+    queryKey: ["questions", user?.id],
+    queryFn: ({ pageParam = 0 }) =>
+      getQuestions({
+        limit: 10,
+        cursor: pageParam,
+        userId: user?.id!,
+        role: user?.role!,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.questions.at(-1)?.id : undefined,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
-  const questions = data?.questions || [];
-  const total = data?.total || 0;
+  const questions = data?.pages.flatMap((page) => page.questions) || [];
+
+  // Scroll Observer for "Load More"
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) fetchNextPage();
+      },
+      { threshold: 1.0 }
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Handle errors
   if (isError) {
     console.error("Error loading questions:", error);
-    return <p className="text-red-500 text-center">Failed to load questions.</p>;
+    return (
+      <p className="text-red-500 text-center">Failed to load questions.</p>
+    );
   }
 
   return (
@@ -60,7 +82,7 @@ export default function QuestionPage() {
       {/* Questions List */}
       <div className="border rounded-lg p-4 min-h-[70dvh]">
         {isLoading ? (
-          <p className="text-center">Loading questions...</p>
+          <p className="text-center text-gray-500">Loading questions...</p>
         ) : questions.length > 0 ? (
           <div className="space-y-2">
             {questions.map((question: QuestionType) => (
@@ -101,7 +123,7 @@ export default function QuestionPage() {
                 </p>
 
                 {/* Question Text */}
-                <p className="text-base ">{question.question_text}</p>
+                <p className="text-base">{question.question_text}</p>
 
                 {/* Options / Answer */}
                 {question.options?.length ? (
@@ -115,9 +137,7 @@ export default function QuestionPage() {
                           key={option + "_ans"}
                           className={cn(
                             "text-xs flex gap-2 items-center",
-                            isCorrect
-                              ? "text-green-600"
-                              : "text-neutral-700 "
+                            isCorrect ? "text-green-600" : "text-neutral-700 "
                           )}
                         >
                           {option}
@@ -135,10 +155,25 @@ export default function QuestionPage() {
         ) : (
           <p className="text-center text-gray-500">No questions found.</p>
         )}
-      </div>
 
-      {/* Pagination Component */}
-      <UnifiedPagination total={total} />
+        {/* Infinite Scroll Load More Trigger */}
+        {hasNextPage && (
+          <div ref={loadMoreRef} className="h-10 mt-4 text-center">
+            {isFetchingNextPage ? (
+              <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+            ) : (
+              "Load more..."
+            )}
+          </div>
+        )}
+
+        {/* Show end message when done */}
+        {!hasNextPage && questions.length > 0 && (
+          <p className="text-center text-gray-500 mt-4">
+            You've reached the end!
+          </p>
+        )}
+      </div>
     </div>
   );
 }

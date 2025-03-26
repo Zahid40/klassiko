@@ -5,34 +5,57 @@ import { questionSchema } from "@/schema/schema";
 import { QuestionType } from "@/types/type";
 import { z } from "zod";
 
-// Function to fetch questions with pagination
-export const getQuestions = async (
-  page: number = 1,
-  pageSize: number = 10,
-  teacherId: string
-): Promise<{ questions: QuestionType[]; total: number }> => {
-  try {
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize - 1;
+interface GetQuestionsParams {
+  limit?: number; // ✅ Limit the number of questions per fetch
+  cursor?: number; // ✅ Use last item ID as cursor for infinite scroll
+  userId: string;
+  role: "student" | "teacher" | "admin";
+}
 
-    // Fetch questions within the given range
-    const { data: questions, error } = await supabase
-      .from("questions")
-      .select("*")
-      .eq("teacher_id", teacherId)
-      .range(start, end);
+/**
+ * Fetches questions with role-based control and supports infinite scroll.
+ */
+export const getQuestions = async ({
+  limit = 10,
+  cursor,
+  userId,
+  role,
+}: GetQuestionsParams): Promise<{
+  questions: QuestionType[];
+  hasMore: boolean;
+}> => {
+  try {
+    // ✅ Role-based access control
+    if (role === "student") {
+      console.warn("Students are not allowed to fetch questions.");
+      return { questions: [], hasMore: false };
+    }
+
+    let query = supabase.from("questions").select("*");
+
+    // 🔒 Role-based filtering
+    if (role === "teacher") query = query.eq("teacher_id", userId);
+
+    // ✅ Cursor-based pagination for infinite scroll
+    if (cursor) query = query.gt("id", cursor);
+
+    // ✅ Limit the number of results
+    query = query.limit(limit);
+
+    // ✅ Order by ID for consistent pagination
+    query = query.order("id", { ascending: true });
+
+    const { data: questions, error } = await query;
 
     if (error) throw error;
 
-    // Fetch total count of questions
-    const { count } = await supabase
-      .from("questions")
-      .select("id", { count: "exact", head: true });
+    // ✅ Check if there's more data (hasNextPage)
+    const hasMore = questions.length === limit;
 
-    return { questions: questions || [], total: count || 0 };
+    return { questions: questions || [], hasMore };
   } catch (error) {
     console.error("Failed to fetch questions:", error);
-    return { questions: [], total: 0 };
+    return { questions: [], hasMore: false };
   }
 };
 

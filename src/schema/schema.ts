@@ -12,6 +12,14 @@ export const quizSchema = z.object({
   questions: z.array(z.string()).nonempty(),
 });
 
+export const quizPerformanceSchema = z.object({
+  id: z.string().uuid(),
+  quiz_id: z.string().uuid(),
+  student_id: z.string().uuid(),
+  score: z.number().int(),
+  created_at: z.date(),
+});
+
 export const questionSchema = z.object({
   id: z.string(), // Auto-generated ID
   teacher_id: z.string().uuid(), // UUID of the teacher
@@ -35,7 +43,6 @@ export const classSchema = z.object({
   id: z.string().uuid(),
   class_name: z.string().min(1, "Class name is required"),
   description: z.string().optional(),
-  enrollments: classEnrollment.array(),
   teacher_id: z.string().uuid(),
   created_at: z.date(),
   updated_at: z.date(),

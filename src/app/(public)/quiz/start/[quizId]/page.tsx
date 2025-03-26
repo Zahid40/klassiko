@@ -1,23 +1,32 @@
 "use client";
 import { useUser } from "@/components/providers/user-provider";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { Clock } from "iconsax-react";
-import { useQuery } from "@tanstack/react-query";
-import { fetchQuizWithQuestions } from "@/actions/quiz.action";
+import { Clock, TickCircle } from "iconsax-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  createQuizPerformance,
+  fetchQuizWithQuestions,
+} from "@/actions/quiz.action";
 import { toast } from "sonner";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
-import { formatRelative } from "date-fns";
+import { formatDistance, formatRelative, subDays } from "date-fns";
+import { QuestionType } from "@/types/type";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+
+
 
 export default function page({ params }: { params: { quizId: string } }) {
   const { user } = useUser();
-  if (!user) return null;
+  // if (!user) return null;
   const { quizId } = params;
+  const router = useRouter();
 
-  const isStudent = user.role === "student";
+  const isStudent = user?.role === "student";
 
   const {
     data: quiz,
@@ -36,38 +45,82 @@ export default function page({ params }: { params: { quizId: string } }) {
   const [showResults, setShowResults] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
 
-  if (isLoading) return <p>Loading quiz...</p>;
-  if (error) {
-    toast.error("Failed to load quiz.");
-    return <p>Error loading quiz</p>;
-  }
 
-  if (!quiz) return <p>Quiz not found</p>;
+  
+// ✅ Fullscreen setup — hooks remain consistent
+// useEffect(() => {
+//   if (!user) return; // Early return inside hook, not before it
 
-  const currentQuestion = quiz.questions[currentQuestionIndex];
-  const quizDuration = quiz.duration || 0; // Duration in seconds
+//   const enterFullScreen = () => {
+//     const elem = document.documentElement;
+//     if (elem.requestFullscreen) elem.requestFullscreen();
+//   };
+
+//   const preventExit = (e: BeforeUnloadEvent) => {
+//     e.preventDefault();
+//     e.returnValue = "Are you sure you want to leave the quiz?";
+//   };
+
+//   const handleExitAttempt = () => {
+//     const confirmExit = window.confirm("Are you sure you want to leave the quiz?");
+//     if (confirmExit) router.push("/dashboard/quiz");
+//   };
+
+//   enterFullScreen();
+//   window.addEventListener("beforeunload", preventExit);
+//   window.addEventListener("popstate", handleExitAttempt);
+
+//   return () => {
+//     window.removeEventListener("beforeunload", preventExit);
+//     window.removeEventListener("popstate", handleExitAttempt);
+//     if (document.exitFullscreen) document.exitFullscreen();
+//   };
+// }, [user, router]);
+  
+  
+
+  // Mutation setup for submitting quiz
+  const { mutate } = useMutation({
+    mutationFn: createQuizPerformance,
+    onSuccess: () => {
+      toast.success("Quiz submitted successfully!");
+      router.replace("/dashboard/class");
+    },
+    onError: (error) => {
+      toast.error(`Failed to submit quiz: ${error.message}`);
+    },
+  });
+
+  // Calculate score
+  const calculateScore = useCallback((responses: any[], questions: any[]) => {
+    return responses.reduce((score, response) => {
+      const question = questions.find((q) => q.id === response.question_id);
+      return question &&
+        response.selected_option &&
+        response.selected_option.toLowerCase() === question.correct_answer.toLowerCase()
+        ? score + 1
+        : score;
+    }, 0);
+  }, []);
+
+  // Handle submitting the quiz
+  const handleSubmitQuiz = useCallback(
+    (finalScore: number) => {
+      if (isStudent) {
+        mutate({ quiz_id: quizId, student_id: user.id, score: finalScore });
+      } else {
+        toast.success("Quiz completed!");
+        router.replace("/dashboard/class");
+      }
+    },
+    [isStudent, quizId, user?.id, mutate, router]
+  );
+
 
   // Handle option selection
   const handleSelectOption = (option: string) => setSelectedOption(option);
 
-  const calculateScore = (responses: any[], questions: any[]) => {
-    let totalScore = 0;
 
-    responses.forEach((response) => {
-      const question = questions.find((q) => q.id === response.question_id);
-
-      if (
-        question &&
-        response.selected_option &&
-        response.selected_option.toLowerCase() ===
-          question.correct_answer.toLowerCase()
-      ) {
-        totalScore += 1;
-      }
-    });
-
-    return totalScore;
-  };
 
   // Handle "Next" button click
   const handleNext = () => {
@@ -85,6 +138,7 @@ export default function page({ params }: { params: { quizId: string } }) {
         const score = calculateScore(updatedResponses, quiz.questions);
         setFinalScore(score);
         setShowResults(true);
+        handleSubmitQuiz(score);
         toast.success(`Quiz submitted! Your score: ${score}`);
       }
     } else {
@@ -107,6 +161,8 @@ export default function page({ params }: { params: { quizId: string } }) {
       const score = calculateScore(updatedResponses, quiz.questions);
       setFinalScore(score);
       setShowResults(true);
+      handleSubmitQuiz(score);
+
       toast.success(`Quiz submitted! Your score: ${score}`);
     }
   };
@@ -122,6 +178,8 @@ export default function page({ params }: { params: { quizId: string } }) {
     const score = calculateScore(updatedResponses, quiz.questions);
     setFinalScore(score);
     setShowResults(true);
+    handleSubmitQuiz(score);
+
     toast.warning("Time's up! Unanswered questions were skipped.");
   };
 
@@ -139,6 +197,20 @@ export default function page({ params }: { params: { quizId: string } }) {
       .padStart(2, "0")}`;
   };
 
+  if (isLoading) return <p>Loading quiz...</p>;
+  if (error) {
+    toast.error("Failed to load quiz.");
+    return <p>Error loading quiz</p>;
+  }
+
+  if (!quiz) return <p>Quiz not found</p>;
+
+  const currentQuestion = quiz.questions[currentQuestionIndex];
+  const quizDuration = quiz.duration || 0; // Duration in seconds
+
+
+
+
   return (
     <section className="min-w-sm max-w-md mx-auto h-dvh min-h-dvh max-h-dvh p-6 flex flex-col gap-4 overflow-hidden relative">
       <h1 className="text-center text-xl font-medium bg-primary-500 rounded-sm p-4 text-background">
@@ -146,12 +218,12 @@ export default function page({ params }: { params: { quizId: string } }) {
       </h1>
       <div className="flex items-center gap-2">
         <Avatar className="h-8 w-8 rounded-lg">
-          <AvatarImage src={user.profile_picture} alt={user.name} />
+          <AvatarImage src={user?.profile_picture} alt={user?.name} />
           <AvatarFallback className="rounded-lg bg-primary-100">
-            {user.name ? user.name.slice(0, 1) : "U"}
+            {user?.name ? user.name.slice(0, 1) : "U"}
           </AvatarFallback>
         </Avatar>
-        <p className="truncate font-semibold text-sm">{user.name}</p>
+        <p className="truncate font-semibold text-sm">{user?.name}</p>
       </div>
       <div className="flex gap-2 items-center">
         <Button
@@ -174,12 +246,59 @@ export default function page({ params }: { params: { quizId: string } }) {
 
       {/* Results Section */}
       {showResults ? (
-        <div className="text-center">
+        <div className="text-center flex flex-col gap-2">
           <h2 className="text-2xl font-bold">Quiz Completed!</h2>
           <p className="text-green-500 text-lg">Score: {finalScore}</p>
-          <p className="text-gray-600">
+          <p className="text-neutral-600">
             Attempted: {attempted} | Skipped: {skipped}
           </p>
+
+          <div className="space-y-2">
+            {quiz.questions.map((question: QuestionType) => (
+              <div
+                key={question.id}
+                className="p-4 border rounded-md text-sm relative flex flex-col gap-2"
+              >
+                {/* Question Text */}
+                <p className="text-base ">{question.question_text}</p>
+
+                {/* Options / Answer */}
+                {question.options?.length ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {question.options.map((option) => {
+                      const isCorrect =
+                        option.toLowerCase() ===
+                        question.correct_answer.toLowerCase();
+
+                      const isUserSelectionCorrect =
+                        responses
+                          .find((quesId) => quesId.question_id === question.id)
+                          ?.selected_option?.toLowerCase() ===
+                        option.toLowerCase();
+                      return (
+                        <p
+                          key={option + "_ans"}
+                          className={cn(
+                            "text-xs flex gap-2 items-center",
+                            isUserSelectionCorrect
+                              ? isCorrect
+                                ? "text-green-600"
+                                : "text-red-500"
+                              : "text-neutral-700 "
+                          )}
+                        >
+                          {option}
+                          {isCorrect && <TickCircle size={14} />}
+                        </p>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs">{question.correct_answer}</p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <div className="pt-8 space-y-6">
@@ -261,7 +380,9 @@ export default function page({ params }: { params: { quizId: string } }) {
         <p className="text-xs font-medium text-neutral-500 text-center flex items-center justify-center gap-1">
           <Clock size={16} />
           Last updated at :{" "}
-          {formatRelative(new Date(quiz.updated_at), new Date())}
+          {formatDistance(subDays(new Date(quiz.updated_at), 0), new Date(), {
+            addSuffix: true,
+          })}
         </p>
       </div>
     </section>

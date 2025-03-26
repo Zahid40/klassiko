@@ -107,7 +107,6 @@ function DraggableQuestion({ question }: { question: QuestionType }) {
 // Main Component
 export default function CreateQuizPage() {
   const { user } = useUser();
-  if (!user) return null;
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -123,9 +122,19 @@ export default function CreateQuizPage() {
   });
 
   // Fetch classes
-  const { data: classData, isLoading: classLoading } = useQuery({
-    queryKey: ["classes", user.id],
-    queryFn: () => getClass(user.id),
+  const {
+    data: classData,
+    isLoading: classLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["classes", user?.id, user?.role],
+    queryFn: () =>
+      getClass({
+        userId: user?.id!,
+        role: user?.role!,
+      }),
+    enabled: !!user,
   });
 
   // Fetch questions

@@ -13,32 +13,14 @@ import { getQuiz } from "@/actions/quiz.action";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { ArrowRight2, Clock } from "iconsax-react";
-
-// Fetch Class Data
-const fetchClassData = async ({
-  userId,
-  classId,
-  role,
-}: {
-  userId: string;
-  classId: string | null;
-  role: string;
-}): Promise<ClassType> => {
-  const response = await fetch(
-    `/api/class?user_id=${userId}&class_id=${classId}&role=${role}`
-  );
-  if (!response.ok) throw new Error("Failed to fetch class data");
-
-  const result: ApiResponseType = await response.json();
-  if (!result.success) throw new Error(result.message);
-
-  return result.data[0];
-};
+import { getClass } from "@/actions/class.action";
+import CopyButton from "@/components/CopyButton";
+import QuizCard from "@/components/quiz-card";
 
 export default function Class() {
   const searchParams = useSearchParams();
   const { user } = useUser();
-  const classId = searchParams.get("class");
+  const classId = searchParams.get("class")!;
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch Class Data
@@ -50,10 +32,10 @@ export default function Class() {
   } = useQuery({
     queryKey: ["class", user?.id, classId, user?.role],
     queryFn: () =>
-      fetchClassData({
-        userId: user?.id ?? "",
+      getClass({
+        userId: user?.id!,
         classId,
-        role: user?.role ?? "",
+        role: user?.role!,
       }),
     enabled: !!user && !!classId,
     staleTime: 5 * 60 * 1000,
@@ -70,12 +52,18 @@ export default function Class() {
     isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey: ["quizzes", classId, user?.id],
-    queryFn: ({ pageParam }) =>
-      getQuiz(5, pageParam, classId ?? undefined, user?.id),
-    initialPageParam: 0, // ✅ Set the initial page
+    queryFn: ({ pageParam = 0 }) =>
+      getQuiz({
+        userId: user?.id!,
+        role: user?.role!,
+        limit: 5,
+        cursor: pageParam,
+        classId,
+      }),
+    initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) =>
-      lastPage.data.length === 5 ? allPages.length + 1 : undefined,
-    enabled: !!classId,
+      lastPage?.hasMore ? allPages.length * 5 : undefined,
+    enabled: !!classId && !!user?.id,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
@@ -117,19 +105,30 @@ export default function Class() {
     return <p className="text-center text-gray-500">No Class Found.</p>;
   }
 
+  const classData = selectedClass.data[0];
+
   return (
     <div className="flex flex-col gap-6 items-center h-full px-4 py-8">
       {/* Avatar (optional) */}
       <Avatar className="size-12 ">
         <AvatarFallback className="bg-primary-500 text-background text-2xl font-bold capitalize">
-          {selectedClass.class_name.slice(0, 1)}
+          {classData.class_name.slice(0, 1)}
         </AvatarFallback>
       </Avatar>
 
       {/* Class Info */}
       <div className="text-center">
-        <h1 className="text-2xl font-bold">{selectedClass.class_name}</h1>
+        <h1 className="text-2xl font-bold">{classData.class_name}</h1>
+        <p className="text-neutral-700 text-sm text-center">
+          {classData.description}
+        </p>
         <Separator className="w-full mt-2" />
+      </div>
+      <div>
+        <CopyButton
+          text={`http://localhost:3000/class/join/${classId}`}
+          title="Joining Link for Students"
+        />
       </div>
 
       {/* Quizzes Section */}
@@ -144,27 +143,7 @@ export default function Class() {
         {/* Render quizzes */}
         {quizzes.length ? (
           quizzes.map((q) => (
-            <div
-              key={q.id}
-              className="p-4 border rounded-md text-sm relative flex flex-row justify-between items-center gap-2"
-            >
-              <div className="space-y-2">
-                <p className="text-lg">{q.quiz_name}</p>
-                <p className="text-sm">{q.questions.length} Questions</p>
-                {q.duration && (
-                  <p className="text-xs flex gap-1 items-center">
-                    <Clock size={16} />
-                    {q.duration} mins
-                  </p>
-                )}
-              </div>
-              <Button asChild>
-                <Link href={`/dashboard/quiz/start/${q.id}/${user?.id}`}>
-                  Start Quiz
-                  <ArrowRight2 />
-                </Link>
-              </Button>
-            </div>
+            <QuizCard quiz={q} key={q.id} />
           ))
         ) : (
           <p className="text-sm text-gray-500">No quizzes available yet.</p>

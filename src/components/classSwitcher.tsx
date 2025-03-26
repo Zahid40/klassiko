@@ -16,46 +16,45 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCallback, useEffect, useState } from "react";
-import { ClassType } from "@/features/class/types/class.type";
 import { useUser } from "@/components/providers/user-provider";
 import { toast } from "sonner";
 import { Skeleton } from "./ui/skeleton";
 import { useRouter, useSearchParams } from "next/navigation";
-
-const fetchClasses = async (userId: string, role: string) => {
-  const response = await fetch(`/api/class?user_id=${userId}&role=${role}`);
-  if (!response.ok) {
-    throw new Error(`HTTP error! Status: ${response.status}`);
-  }
-  const result = await response.json();
-  if (!result.success) {
-    throw new Error(result.message);
-  }
-  return result.data as ClassType[];
-};
+import { ClassType } from "@/types/type";
+import { getClass } from "@/actions/class.action";
+import AddClassDialog from "./add-class-dilog";
 
 export const ClassSwitcher = () => {
   const { user } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
+  const [activeClass, setActiveClass] = useState<ClassType | null>(null);
 
   // Fetch classes using react-query
-  const { data: classes = [], isLoading, isError } = useQuery({
+  const {
+    data: classes,
+    isLoading,
+    isError,
+    error,
+    refetch: refetchClasses,
+  } = useQuery({
     queryKey: ["classes", user?.id, user?.role],
-    queryFn: () => fetchClasses(user!.id, user!.role),
-    // enabled: !!user, // Only fetch if user exists
-    // onError: (error) => toast.error(error.message),
+    queryFn: () =>
+      getClass({
+        userId: user?.id!,
+        role: user?.role!,
+      }),
+    enabled: !!user,
   });
-
-  const [activeClass, setActiveClass] = useState<ClassType | null>(null);
 
   // Update active class when classes are fetched
   useEffect(() => {
-    if (classes.length > 0) {
-      setActiveClass(classes[0]);
+    if (classes?.data.length! > 0) {
+      setActiveClass(classes?.data[0]!);
     }
   }, [classes]);
 
@@ -124,7 +123,7 @@ export const ClassSwitcher = () => {
             <DropdownMenuLabel className="text-xs text-muted-foreground">
               classes
             </DropdownMenuLabel>
-            {classes.map((Class, index) => (
+            {classes?.data.map((Class, index) => (
               <DropdownMenuItem
                 key={Class.id}
                 onClick={() => setActiveClass(Class)}
@@ -134,19 +133,25 @@ export const ClassSwitcher = () => {
                   <Star className="size-4 shrink-0" />
                 </div>
                 {Class.class_name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
-              <div className="flex size-6 items-center justify-center rounded-md border bg-background">
-                <Plus className="size-4" />
-              </div>
-              <div className="font-medium text-muted-foreground">Add Class</div>
-            </DropdownMenuItem>
+            {user?.role !== "student" && (
+             
+                <AddClassDialog onSuccess={() => refetchClasses()} />
+              
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
-      ) : null}
+      ) : (
+        <>
+         {user?.role !== "student" && (
+             
+             <AddClassDialog onSuccess={() => refetchClasses()} />
+           
+         )}
+        </>
+      )}
     </SidebarGroup>
   );
 };

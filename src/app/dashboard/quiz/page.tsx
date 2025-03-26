@@ -1,39 +1,45 @@
 "use client";
 import React, { useRef, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getQuiz } from "@/actions/quiz.action";
 import { Button } from "@/components/ui/button";
 import { QuizType } from "@/types/type";
 import Link from "next/link";
 import { useUser } from "@/components/providers/user-provider";
-import { ArrowRight2, Clock } from "iconsax-react";
+import QuizCard from "@/components/quiz-card";
 
 export default function QuizPage() {
   const { user } = useUser();
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch quizzes with infinite scroll using cursor-based pagination
+  // Infinite Scroll Fetch for Quizzes
   const {
-    data,
-    error,
+    data: quizzesData,
     isLoading,
+    isError,
+    error,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey: ["quizzes", user?.id],
-    queryFn: ({ pageParam }) =>
-      getQuiz(undefined, 5, pageParam, undefined, user?.id),
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore
-        ? lastPage.data[lastPage.data.length - 1]?.id
-        : undefined,
+    queryFn: ({ pageParam = 0 }) =>
+      getQuiz({
+        userId: user?.id!,
+        role: user?.role!,
+        limit: 5,
+        cursor: pageParam,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage?.hasMore ? allPages.length * 5 : undefined,
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
-  const quizzes = data?.pages.flatMap((page: any) => page.data) ?? [];
+  const quizzes = quizzesData?.pages.flatMap((page: any) => page.data) ?? [];
 
   // Infinite scroll trigger setup
   useEffect(() => {
@@ -56,9 +62,11 @@ export default function QuizPage() {
       <h1 className="text-center text-xl font-bold">Quiz Page</h1>
 
       {/* Create Quiz Button */}
-      <Button asChild>
-        <Link href={"/dashboard/quiz/create"}>Create Quiz</Link>
-      </Button>
+      {user?.role !== "student" && (
+        <Button asChild>
+          <Link href={"/dashboard/quiz/create"}>Create Quiz</Link>
+        </Button>
+      )}
 
       {/* Quizzes Container */}
       <div className="border rounded-lg p-4 min-h-[70dvh]">
@@ -69,27 +77,7 @@ export default function QuizPage() {
         ) : quizzes.length > 0 ? (
           <div className="space-y-2">
             {quizzes.map((q: QuizType) => (
-              <div
-                key={q.id}
-                className="p-4 border rounded-md text-sm relative flex flex-row justify-between items-center gap-2"
-              >
-                <div className="space-y-2">
-                  <p className="text-lg">{q.quiz_name}</p>
-                  <p className="text-sm">{q.questions.length} Questions</p>
-                  {q.duration && (
-                    <p className="text-xs flex gap-1 items-center">
-                      <Clock size={16} />
-                      {q.duration} mins
-                    </p>
-                  )}
-                </div>
-                <Button asChild>
-                  <Link href={`/quiz/start/${q.id}`}>
-                    Start Quiz
-                    <ArrowRight2 />
-                  </Link>
-                </Button>
-              </div>
+              <QuizCard quiz={q} key={q.id} />
             ))}
           </div>
         ) : (
