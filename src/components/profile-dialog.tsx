@@ -97,7 +97,7 @@ export default function ProfileDialog() {
                 <span className="text-sm">{user?.email}</span>
               </div>
 
-              <div className="flex justify-between items-center">
+              {/* <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <Lock className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground text-sm">
@@ -105,7 +105,7 @@ export default function ProfileDialog() {
                   </span>
                 </div>
                 <span className="text-sm">{user?.password}</span>
-              </div>
+              </div> */}
 
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
