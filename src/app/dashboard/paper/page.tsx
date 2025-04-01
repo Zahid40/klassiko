@@ -5,7 +5,7 @@ import { useUser } from "@/components/providers/user-provider";
 import { Button } from "@/components/ui/button";
 import { PaperType } from "@/types/type";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { Add, ArrowRight2, Clock } from "iconsax-react";
+import { Add } from "iconsax-react";
 import Link from "next/link";
 import React, { useEffect, useRef } from "react";
 
@@ -59,17 +59,20 @@ export default function PaperPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-center">Create Papers</h1>
-      <div className="flex flex-row gap-6 justify-between items-center border rounded-lg p-8  ">
-        <p className="text-base text-balance text-neutral-700">
-          Add your paper
-        </p>
-        <Button asChild>
-          <Link href={"/dashboard/paper/create"}>
-            <Add />
-            Add Paper
-          </Link>
-        </Button>
-      </div>
+      {user?.role !== "student" && (
+        <div className="flex flex-row gap-6 justify-between items-center border rounded-lg p-8  ">
+          <p className="text-base text-balance text-neutral-700">
+            Add your paper
+          </p>
+          <Button asChild>
+            <Link href={"/dashboard/paper/create"}>
+              <Add />
+              Add Paper
+            </Link>
+          </Button>
+        </div>
+      )}
+
       {/* Quizzes Container */}
       <div className="border rounded-lg p-4 min-h-[70dvh]">
         {isLoading ? (

@@ -41,7 +41,7 @@ export default function QuestionPage() {
     retry: 1,
   });
 
-  const questions = data?.pages.flatMap((page:any) => page.questions) || [];
+  const questions = data?.pages.flatMap((page: any) => page.questions) || [];
 
   // Scroll Observer for "Load More"
   useEffect(() => {

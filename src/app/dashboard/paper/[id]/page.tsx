@@ -1,13 +1,10 @@
 "use client";
-
 import React, { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ExportButton from "@/components/ExportButton";
 import { fetchQuestionPaper } from "@/actions/paper.action";
 import { formatDistance, subDays } from "date-fns";
-import { cn } from "@/lib/utils";
-import { TickCircle } from "iconsax-react";
 
 export default function Page({ params }: { params: { id: string } }) {
   const { id } = params;

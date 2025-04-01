@@ -18,8 +18,6 @@ import { QuestionType } from "@/types/type";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
-
-
 export default function Page({ params }: { params: { quizId: string } }) {
   const { user } = useUser();
   // if (!user) return null;
@@ -45,40 +43,6 @@ export default function Page({ params }: { params: { quizId: string } }) {
   const [showResults, setShowResults] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
 
-
-  
-// ✅ Fullscreen setup — hooks remain consistent
-// useEffect(() => {
-//   if (!user) return; // Early return inside hook, not before it
-
-//   const enterFullScreen = () => {
-//     const elem = document.documentElement;
-//     if (elem.requestFullscreen) elem.requestFullscreen();
-//   };
-
-//   const preventExit = (e: BeforeUnloadEvent) => {
-//     e.preventDefault();
-//     e.returnValue = "Are you sure you want to leave the quiz?";
-//   };
-
-//   const handleExitAttempt = () => {
-//     const confirmExit = window.confirm("Are you sure you want to leave the quiz?");
-//     if (confirmExit) router.push("/dashboard/quiz");
-//   };
-
-//   enterFullScreen();
-//   window.addEventListener("beforeunload", preventExit);
-//   window.addEventListener("popstate", handleExitAttempt);
-
-//   return () => {
-//     window.removeEventListener("beforeunload", preventExit);
-//     window.removeEventListener("popstate", handleExitAttempt);
-//     if (document.exitFullscreen) document.exitFullscreen();
-//   };
-// }, [user, router]);
-  
-  
-
   // Mutation setup for submitting quiz
   const { mutate } = useMutation({
     mutationFn: createQuizPerformance,
@@ -97,7 +61,8 @@ export default function Page({ params }: { params: { quizId: string } }) {
       const question = questions.find((q) => q.id === response.question_id);
       return question &&
         response.selected_option &&
-        response.selected_option.toLowerCase() === question.correct_answer.toLowerCase()
+        response.selected_option.toLowerCase() ===
+          question.correct_answer.toLowerCase()
         ? score + 1
         : score;
     }, 0);
@@ -116,11 +81,8 @@ export default function Page({ params }: { params: { quizId: string } }) {
     [isStudent, quizId, user?.id, mutate, router]
   );
 
-
   // Handle option selection
   const handleSelectOption = (option: string) => setSelectedOption(option);
-
-
 
   // Handle "Next" button click
   const handleNext = () => {
@@ -207,9 +169,6 @@ export default function Page({ params }: { params: { quizId: string } }) {
 
   const currentQuestion = quiz.questions[currentQuestionIndex];
   const quizDuration = quiz.duration || 0; // Duration in seconds
-
-
-
 
   return (
     <section className="min-w-sm max-w-md mx-auto h-dvh min-h-dvh max-h-dvh p-6 flex flex-col gap-4 overflow-hidden relative">

@@ -1,11 +1,9 @@
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import React from "react";
-
 interface LogoProps {
   className?: string; // Optional className
 }
-
 const Logo: React.FC<LogoProps> = ({ className }) => {
   return (
     <div className={cn("aspect-square size-12 relative", className)}>
@@ -21,5 +19,4 @@ const Logo: React.FC<LogoProps> = ({ className }) => {
     </div>
   );
 };
-
 export default Logo;

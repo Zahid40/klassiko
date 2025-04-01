@@ -103,41 +103,6 @@ export const getPaper = async ({
       }
     }
 
-    // // ✅ Fetch class data if `withClass` is enabled
-    // if (withClass) {
-    //   const classIds = [...new Set(data.map((p) => p.class_id))]; // ✅ Optimized
-    //   if (classIds.length) {
-    //     const { data: classes, error } = await supabase
-    //       .from("class")
-    //       .select("*")
-    //       .in("id", classIds);
-
-    //     if (!error) {
-    //       data.forEach((paper) => {
-    //         paper.classData = classes.find((c) => c.id === paper.class_id) || null; // ✅ Better naming
-    //       });
-    //     }
-    //   }
-    // }
-
-    // // ✅ Fetch teacher data if `withTeacher` is enabled
-    // if (withTeacher) {
-    //   const teacherIds = [...new Set(data.map((p) => p.teacher_id))]; // ✅ Optimized
-    //   if (teacherIds.length) {
-    //     const { data: teachers, error } = await supabase
-    //       .from("users")
-    //       .select("*")
-    //       .in("id", teacherIds);
-
-    //     if (!error) {
-    //       data.forEach((paper) => {
-    //         paper.teacherData =
-    //           teachers.find((t) => t.id === paper.teacher_id) || null; // ✅ Better naming
-    //       });
-    //     }
-    //   }
-    // }
-
     const hasMore = data.length === limit;
     return { data: data || [], hasMore };
   } catch (error) {

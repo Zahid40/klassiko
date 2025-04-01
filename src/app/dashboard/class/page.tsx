@@ -1,18 +1,13 @@
 "use client";
 import { useUser } from "@/components/providers/user-provider";
 import { useSearchParams } from "next/navigation";
-import React, { useEffect, useRef } from "react";
-import { ApiResponseType } from "@/types/app.type";
+import React, { useEffect } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
-import { ClassType, QuizType } from "@/types/type";
+import { useQuery } from "@tanstack/react-query";
 import { getQuiz, getQuizPerformance } from "@/actions/quiz.action";
-import Link from "next/link";
 import { Loader2 } from "lucide-react";
-import { ArrowRight2, Clock } from "iconsax-react";
 import { getClass } from "@/actions/class.action";
 import CopyButton from "@/components/CopyButton";
 import QuizCard from "@/components/quiz-card";
@@ -23,7 +18,6 @@ export default function Class() {
   const searchParams = useSearchParams();
   const { user } = useUser();
   const classId = searchParams.get("class")!;
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch Class Data
   const {
@@ -108,7 +102,7 @@ export default function Class() {
   useEffect(() => {
     if (isError) toast.error(error.message);
     if (quizzesError) toast.error("Failed to load quizzes.");
-  }, [isError, quizzesError , error]);
+  }, [isError, quizzesError, error]);
 
   // Loading State for Class
   if (isLoading) {
@@ -170,41 +164,46 @@ export default function Class() {
         </div>
 
         <div className="w-full">
-  <h2 className="text-lg font-semibold mb-2">Quiz Attempts</h2>
+          <h2 className="text-lg font-semibold mb-2">Quiz Attempts</h2>
 
-  {/* Show loading if quizzes are still fetching */}
-  {quizPerLoading && (
-    <p className="text-center text-gray-500">Loading quiz performance...</p>
-  )}
+          {/* Show loading if quizzes are still fetching */}
+          {quizPerLoading && (
+            <p className="text-center text-gray-500">
+              Loading quiz performance...
+            </p>
+          )}
 
-  {/* Render quizzes */}
-  {quiz_performance?.length ? (
-    quiz_performance.map((quiz: any) => (
-      <div key={quiz.id} className="mb-4 border p-3 rounded-md">
-        <h3 className="text-md font-medium">{quiz.quiz_name}</h3>
+          {/* Render quizzes */}
+          {quiz_performance?.length ? (
+            quiz_performance.map((quiz: any) => (
+              <div key={quiz.id} className="mb-4 border p-3 rounded-md">
+                <h3 className="text-md font-medium">{quiz.quiz_name}</h3>
 
-        {/* Show attempts & scores */}
-        {quiz.attempts.length ? (
-          <ul className="list-disc list-inside mt-1 text-sm text-gray-600">
-            {quiz.attempts.map((attempt: any, index: number) => (
-              <li key={index}>
-                Score: {attempt.score}
-                {attempt.student && (
-                  <span className="ml-2 text-gray-400">({attempt.student.name})</span>
+                {/* Show attempts & scores */}
+                {quiz.attempts.length ? (
+                  <ul className="list-disc list-inside mt-1 text-sm text-gray-600">
+                    {quiz.attempts.map((attempt: any, index: number) => (
+                      <li key={index}>
+                        Score: {attempt.score}
+                        {attempt.student && (
+                          <span className="ml-2 text-gray-400">
+                            ({attempt.student.name})
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-gray-500">No attempts yet.</p>
                 )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-xs text-gray-500">No attempts yet.</p>
-        )}
-      </div>
-    ))
-  ) : (
-    <p className="text-sm text-gray-500">No quiz performance available yet.</p>
-  )}
-</div>
-
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-gray-500">
+              No quiz performance available yet.
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="w-full ">

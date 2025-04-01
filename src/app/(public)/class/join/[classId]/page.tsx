@@ -12,23 +12,6 @@ export default function Page({ params }: { params: { classId: string } }) {
   const { user } = useUser();
   const router = useRouter();
 
-  // 🚀 Fetch class data
-  // const {
-  //   data: classData,
-  //   isLoading,
-  //   isError,
-  //   error,
-  // } = useQuery({
-  //   queryKey: ["class", classId, user?.id],
-  //   queryFn: () =>
-  //     getClass({
-  //       userId: user!.id,
-  //       role: user!.role,
-  //       classId,
-  //     }),
-  //   enabled: !!user,
-  // });
-
   // 🎯 Handle join class mutation
   const { mutate: handleJoinClass, isPending } = useMutation({
     mutationFn: () => joinClass(classId, user!.id),
@@ -44,24 +27,6 @@ export default function Page({ params }: { params: { classId: string } }) {
       </div>
     );
   }
-
-  // // 🔄 Loading state
-  // if (isLoading) {
-  //   return (
-  //     <div className="h-screen flex justify-center items-center">
-  //       <h1>Loading class info...</h1>
-  //     </div>
-  //   );
-  // }
-
-  // // ❌ Error state
-  // if (isError || !classData?.data.length) {
-  //   return (
-  //     <div className="h-screen flex justify-center items-center">
-  //       <h1 className="text-red-500">{error?.message || "Class not found."}</h1>
-  //     </div>
-  //   );
-  // }
 
   // 🎉 Render class join card
   return (

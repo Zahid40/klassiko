@@ -1,7 +1,5 @@
 "use client";
-
 import { useUser } from "@/components/providers/user-provider";
-import supabase from "@/lib/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -33,8 +31,7 @@ import { formatDistance, subDays } from "date-fns";
 import { TickCircle } from "iconsax-react";
 import { cn } from "@/lib/utils";
 import { paperSchema } from "@/schema/schema";
-import { Badge } from "@/components/ui/badge";
-import { Asterisk, Loader2, SquareStack } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { createPaper } from "@/actions/paper.action";
 import { useRouter } from "next/navigation";
 import { useSortable } from "@dnd-kit/sortable";

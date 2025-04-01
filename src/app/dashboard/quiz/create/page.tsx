@@ -1,6 +1,5 @@
 "use client";
 import { useUser } from "@/components/providers/user-provider";
-import supabase from "@/lib/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
