@@ -171,14 +171,14 @@ export default function CreatePaperPage() {
     refetch: refetchQuestions,
   } = useInfiniteQuery({
     queryKey: ["questions", user?.id],
-    queryFn: ({ pageParam = 0 }) =>
+    queryFn: ({ pageParam }) =>
       getQuestions({
         limit: 10,
         cursor: pageParam,
         userId: user?.id!,
         role: user?.role!,
       }),
-    initialPageParam: 0,
+    initialPageParam: "",
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.questions.at(-1)?.id : undefined,
     staleTime: 5 * 60 * 1000,
@@ -221,12 +221,12 @@ export default function CreatePaperPage() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   useEffect(() => {
-    form.setValue("questions", selectedQuestions);
+    form.setValue("questions", selectedQuestions as any);
   }, [selectedQuestions]);
 
   // Submit Handler
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    mutate({ ...values, questions: selectedQuestions });
+    mutate({ ...values, questions: selectedQuestions as any });
   };
 
   // Toggle Question Selection with default marks

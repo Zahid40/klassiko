@@ -2,27 +2,15 @@
 
 import * as React from "react";
 import {
-  AudioWaveform,
   Bell,
-  BookOpen,
-  Bot,
-  Command,
-  Folder,
-  Forward,
   Frame,
-  GalleryVerticalEnd,
   LifeBuoy,
   Map,
-  MoreHorizontal,
   PieChart,
   Send,
-  Settings2,
-  SquareTerminal,
-  Trash2,
 } from "lucide-react";
 
 import { ClassSwitcher } from "@/components/classSwitcher";
-import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
@@ -35,21 +23,10 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarGroupLabel,
-  SidebarMenuAction,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useUser } from "@/components/providers/user-provider";
 import ProfileDialog from "@/components/profile-dialog";
-import { toast } from "sonner";
-import { ClassType } from "@/features/class/types/class.type";
 import Link from "next/link";
 
 // This is sample data.

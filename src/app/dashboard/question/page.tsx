@@ -27,14 +27,14 @@ export default function QuestionPage() {
     refetch,
   } = useInfiniteQuery({
     queryKey: ["questions", user?.id],
-    queryFn: ({ pageParam = 0 }) =>
+    queryFn: ({ pageParam }) =>
       getQuestions({
         limit: 10,
         cursor: pageParam,
         userId: user?.id!,
         role: user?.role!,
       }),
-    initialPageParam: 0,
+    initialPageParam: "",
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.questions.at(-1)?.id : undefined,
     staleTime: 5 * 60 * 1000,

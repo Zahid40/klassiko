@@ -28,7 +28,6 @@ export default function Dashboard() {
     retry: 1,
   });
   const classes = data?.data;
-  console.log(classes);
 
   return (
     <div className="flex flex-col gap-4">

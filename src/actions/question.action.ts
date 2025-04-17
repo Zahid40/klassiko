@@ -7,7 +7,7 @@ import { z } from "zod";
 
 interface GetQuestionsParams {
   limit?: number; // ✅ Limit the number of questions per fetch
-  cursor?: number; // ✅ Use last item ID as cursor for infinite scroll
+  cursor?: string; // ✅ Use last item ID as cursor for infinite scroll
   userId: string;
   role: "student" | "teacher" | "admin";
   isQuiz?: boolean;
