@@ -7,13 +7,17 @@ import { useQuery } from "@tanstack/react-query";
 import { format, formatDistance, subDays } from "date-fns";
 import { Clock } from "iconsax-react";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
 import React from "react";
 
-export default function Dashboard() {
-  const searchParams = useSearchParams();
+export default function Dashboard({
+  params,
+  searchParams,
+}: {
+  params: { slug: string }
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
   const { user } = useUser();
-  const classId = searchParams.get("class")!;
+  const classId = searchParams.class! as string;
 
   // Fetch Class Data
   const { data, isLoading, isError, error } = useQuery({

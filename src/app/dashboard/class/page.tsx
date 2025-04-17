@@ -1,6 +1,5 @@
 "use client";
 import { useUser } from "@/components/providers/user-provider";
-import { useSearchParams } from "next/navigation";
 import React, { useEffect } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -14,10 +13,13 @@ import QuizCard from "@/components/quiz-card";
 import { getPaper } from "@/actions/paper.action";
 import PaperCard from "@/components/paper-card";
 
-export default function Class() {
-  const searchParams = useSearchParams();
+export default function ClassPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const { user } = useUser();
-  const classId = searchParams.get("class")!;
+  const classId = searchParams.class! as string;
 
   // Fetch Class Data
   const {
