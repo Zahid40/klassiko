@@ -144,7 +144,7 @@ export default function KlassikoLanding() {
                   <span className="text-primary-500"> Starts Here</span>
                 </h1>
                 <p className="text-base text-neutral-600 max-w-2xl">
-                  Transform your assessment process with Klassiko's intelligent
+                  Transform your assessment process with Klassiko&rsquo;s intelligent
                   exam paper and quiz generator. Perfect for schools, colleges,
                   and coaching institutes.
                 </p>

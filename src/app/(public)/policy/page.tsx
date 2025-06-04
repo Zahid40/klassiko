@@ -112,7 +112,7 @@ export default function PrivacyPolicy() {
                         href="#childrens-privacy"
                         className="block text-sm text-neutral-600 hover:text-[#A50034] transition-colors"
                       >
-                        8. Children's Privacy
+                        8. Children&rsquo;s Privacy
                       </a>
                       <a
                         href="#policy-changes"
@@ -148,8 +148,8 @@ export default function PrivacyPolicy() {
                       the security of your personal information.
                     </p>
                     <p className="text-neutral-700 leading-relaxed mb-4">
-                      This Privacy Policy explains how Klassiko ("we," "our," or
-                      "us") collects, uses, processes, and protects information
+                      This Privacy Policy explains how Klassiko (we, our, or
+                      us) collects, uses, processes, and protects information
                       when you use our platform, whether you are a teacher,
                       student, administrator, or institutional user.
                     </p>
@@ -592,7 +592,7 @@ export default function PrivacyPolicy() {
                 {/* Children's Privacy */}
                 <section id="childrens-privacy">
                   <h2 className="text-3xl font-bold text-[#A50034] mb-6">
-                    8. Children's Privacy
+                    8. Children&rsquo;s Privacy
                   </h2>
                   <div className="space-y-4">
                     <p className="text-neutral-700 leading-relaxed">
@@ -607,7 +607,7 @@ export default function PrivacyPolicy() {
                       </h3>
                       <ul className="list-disc list-inside text-neutral-700 space-y-2">
                         <li>
-                          We comply with the Children's Online Privacy
+                          We comply with the Children&rsquo;s Online Privacy
                           Protection Act (COPPA)
                         </li>
                         <li>
@@ -634,7 +634,7 @@ export default function PrivacyPolicy() {
 
                     <p className="text-neutral-700 leading-relaxed">
                       Parents and guardians have the right to review, modify, or
-                      delete their child's personal information by contacting
+                      delete their child&rsquo;s personal information by contacting
                       their educational institution or reaching out to us
                       directly.
                     </p>
@@ -663,7 +663,7 @@ export default function PrivacyPolicy() {
                         <li>Email notification to all registered users</li>
                         <li>Prominent notice on our platform</li>
                         <li>
-                          Updated "Last Modified" date at the top of this policy
+                          Updated Last Modified date at the top of this policy
                         </li>
                         <li>
                           For significant changes, we may require explicit
@@ -691,7 +691,7 @@ export default function PrivacyPolicy() {
                   <div className="space-y-6">
                     <p className="text-neutral-700 leading-relaxed">
                       If you have any questions, concerns, or requests regarding
-                      this Privacy Policy or our data practices, please don't
+                      this Privacy Policy or our data practices, please don&rsquo;t
                       hesitate to contact us:
                     </p>
 

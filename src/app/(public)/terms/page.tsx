@@ -47,7 +47,7 @@ export default function TermsAndConditions() {
               Terms & Conditions
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              These terms govern your use of Klassiko's educational platform.
+              These terms govern your use of Klassiko&rsquo;s educational platform.
               Please read them carefully before using our services.
             </p>
             <div className="text-sm text-gray-500">
@@ -152,8 +152,8 @@ export default function TermsAndConditions() {
                 >
                   <div className="space-y-4">
                     <p className="text-gray-700 leading-relaxed">
-                      By accessing or using Klassiko ("the Service"), you agree
-                      to be bound by these Terms and Conditions ("Terms"). If
+                      By accessing or using Klassiko (the Service), you agree
+                      to be bound by these Terms and Conditions (Terms). If
                       you disagree with any part of these terms, then you may
                       not access the Service.
                     </p>
@@ -360,7 +360,7 @@ export default function TermsAndConditions() {
                   <div className="space-y-6">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                        Klassiko's Intellectual Property
+                        Klassiko&rsquo;s Intellectual Property
                       </h3>
                       <p className="text-gray-700 leading-relaxed mb-3">
                         The Service and its original content, features, and
@@ -477,7 +477,7 @@ export default function TermsAndConditions() {
                           🔒 Privacy Violations
                         </h4>
                         <ul className="list-disc list-inside text-gray-700 space-y-2 text-sm">
-                          <li>Access other users' private information</li>
+                          <li>Access other users&rsquo;s private information</li>
                           <li>
                             Share student data without proper authorization
                           </li>
@@ -600,7 +600,7 @@ export default function TermsAndConditions() {
                       </h3>
                       <p className="text-gray-700 leading-relaxed mb-3">
                         While we strive to maintain high availability, Klassiko
-                        is provided on an "as is" and "as available" basis. We
+                        is provided on an as is and as available basis. We
                         do not guarantee that:
                       </p>
                       <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
@@ -648,7 +648,7 @@ export default function TermsAndConditions() {
                       <p className="text-blue-800 text-sm">
                         <strong>Educational Use:</strong> Users are responsible
                         for maintaining backup copies of important educational
-                        content and ensuring compliance with their institution's
+                        content and ensuring compliance with their institution&rsquo;s
                         data retention policies.
                       </p>
                     </div>
@@ -747,7 +747,7 @@ export default function TermsAndConditions() {
                       </p>
                       <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
                         <li>
-                          Update the "Last Modified" date at the top of this
+                          Update the Last Modified date at the top of this
                           page
                         </li>
                         <li>
