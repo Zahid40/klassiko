@@ -3,11 +3,15 @@
 import * as React from "react";
 import {
   Bell,
+  FlaskConical,
   Frame,
+  LibraryBig,
   LifeBuoy,
   Map,
   PieChart,
+  ScrollText,
   Send,
+  Shapes,
 } from "lucide-react";
 
 import { ClassSwitcher } from "@/components/classSwitcher";
@@ -28,46 +32,35 @@ import {
 import { useUser } from "@/components/providers/user-provider";
 import ProfileDialog from "@/components/profile-dialog";
 import Link from "next/link";
+import { Home } from "iconsax-react";
 
 // This is sample data.
 const data = {
-  navSecondary: [
-    {
-      title: "Support",
-      url: "#",
-      icon: LifeBuoy,
-    },
-    {
-      title: "Feedback",
-      url: "#",
-      icon: Send,
-    },
-    {
-      title: "Notifications",
-      url: "#",
-      icon: Bell,
-    },
-  ],
   projects: [
+    {
+      name: "Home",
+      url: "/dashboard",
+      icon: Home,
+    },
     {
       name: "Class",
       url: "/dashboard/class",
-      icon: Frame,
+      icon: Shapes,
     },
     {
       name: "Quizzes",
       url: "/dashboard/quiz",
-      icon: PieChart,
+      icon: FlaskConical,
     },
     {
       name: "Papers",
       url: "/dashboard/paper",
-      icon: Map,
+      icon: ScrollText,
     },
     {
       name: "Question",
       url: "/dashboard/question",
-      icon: Map,
+      icon: LibraryBig,
     },
   ],
 };

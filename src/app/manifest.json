@@ -3,19 +3,23 @@
   "short_name": "Klassiko",
   "icons": [
     {
+      "src": "/icon/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    },
+    {
       "src": "/icon/web-app-manifest-192x192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
+      "type": "image/png"
     },
     {
       "src": "/icon/web-app-manifest-512x512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "type": "image/png"
     }
   ],
   "theme_color": "#a50034",
+  "start_url": "/",
   "background_color": "#a50034",
   "display": "standalone"
 }

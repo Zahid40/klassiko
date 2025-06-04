@@ -28,6 +28,7 @@ import {
 import { Button } from "./ui/button";
 import { useUser } from "@/components/providers/user-provider";
 import ProfileDialog from "@/components/profile-dialog";
+import { useRouter } from "next/navigation";
 
 export function NavUser({
   user,
@@ -40,6 +41,12 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar();
   const { logout } = useUser();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   return (
     <SidebarMenu>
@@ -102,7 +109,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Button
-                onClick={() => logout()}
+                onClick={handleLogout}
                 variant={"ghost"}
                 className="w-full justify-start"
               >

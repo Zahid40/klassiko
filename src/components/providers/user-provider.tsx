@@ -146,7 +146,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     document.cookie = "userState=; path=/; max-age=0"; // Remove cookie
     localStorage.removeItem("token");
-    router.push("/login");
+    // router.push("/login");
   };
 
   // Update User Function

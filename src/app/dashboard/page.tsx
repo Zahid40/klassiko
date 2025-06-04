@@ -7,14 +7,15 @@ import { useQuery } from "@tanstack/react-query";
 import { format, formatDistance, subDays } from "date-fns";
 import { Clock } from "iconsax-react";
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 
 export default function Dashboard({
   params,
   searchParams,
 }: {
-  params: { slug: string }
-  searchParams: { [key: string]: string | string[] | undefined }
+  params: { slug: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const { user } = useUser();
   const classId = searchParams.class! as string;
@@ -56,51 +57,52 @@ export default function Dashboard({
           <p className="text-center text-gray-500">Loading classes ...</p>
         )}
 
-        {/* Render quizzes */}
-        {classes?.length ? (
-          classes.map((c) => {
-            const isClassActive = c.id === classId;
-            return (
-              <div
-                className="border  p-6 rounded-xl flex flex-row relative"
-                key={c.id}
-              >
-                {isClassActive && (
-                  <Badge className="bg-green-600 absolute top-2 right-2 font-medium gap-1">
-                    <div className="size-2 rounded-full bg-green-300 shadow-2xl shadow-green-300 animate-pulse"></div>
-                    Active
-                  </Badge>
-                )}
-                <div className=" absolute bottom-2 right-2 font-medium gap-1">
-                  <p className="text-xs font-medium text-neutral-500 text-center flex items-center justify-center gap-1">
-                    <Clock size={16} />
-                    Last updated at :{" "}
-                    {formatDistance(
-                      subDays(new Date(c.updated_at), 0),
-                      new Date(),
-                      {
-                        addSuffix: true,
-                      }
-                    )}
-                  </p>
-                </div>
-                <div className="space-y-4">
-                  <h3 className="text-xl">{c.class_name}</h3>
-                  <p className="text-xs">{c.description}</p>
-                  <div className="flex gap-2 items-center text-sm">
-                    Class id : <CopyButton text={c.id} />{" "}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {classes?.length ? (
+            classes.map((c) => {
+              const isClassActive = c.id === classId;
+              return (
+                <div
+                  className="border  p-6 rounded-xl flex flex-row relative"
+                  key={c.id}
+                >
+                  {isClassActive && (
+                    <Badge className="bg-green-600 absolute top-2 right-2 font-medium gap-1">
+                      <div className="size-2 rounded-full bg-green-300 shadow-2xl shadow-green-300 animate-pulse"></div>
+                      Active
+                    </Badge>
+                  )}
+                  <div className=" absolute bottom-2 right-2 font-medium gap-1">
+                    <p className="text-xs font-medium text-neutral-500 text-center flex items-center justify-center gap-1">
+                      <Clock size={16} />
+                      Last updated at :{" "}
+                      {formatDistance(
+                        subDays(new Date(c.updated_at), 0),
+                        new Date(),
+                        {
+                          addSuffix: true,
+                        }
+                      )}
+                    </p>
                   </div>
-                  <p className="text-sm">
-                    Created At :{" "}
-                    {format(new Date(c.created_at), "dd MMMM yyyy")}
-                  </p>
+                  <div className="space-y-4">
+                    <h3 className="text-xl">{c.class_name}</h3>
+                    <p className="text-xs">{c.description}</p>
+                    <div className="flex gap-2 items-center text-sm">
+                      Class id : <CopyButton text={c.id} />{" "}
+                    </div>
+                    <p className="text-sm">
+                      Created At :{" "}
+                      {format(new Date(c.created_at), "dd MMMM yyyy")}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            );
-          })
-        ) : (
-          <p className="text-sm text-gray-500">No classes available yet.</p>
-        )}
+              );
+            })
+          ) : (
+            <p className="text-sm text-gray-500">No classes available yet.</p>
+          )}
+        </div>
       </div>
     </div>
   );

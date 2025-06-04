@@ -25,9 +25,15 @@ import { format, formatDistance, subDays } from "date-fns";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { SidebarGroup, SidebarMenuButton } from "@/components/ui/sidebar";
+import { useRouter } from "next/navigation";
 
 export default function ProfileDialog() {
   const { user, logout } = useUser();
+  const router = useRouter();
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
   if (!user) {
     return;
   }
@@ -59,7 +65,7 @@ export default function ProfileDialog() {
           <DialogHeader>
             <DialogTitle></DialogTitle>
             <Link
-              href="/help"
+              href="/"
               className="text-sm text-muted-foreground flex items-center gap-2"
             >
               <QuestionMarkCircle className="h-4 w-4" />
@@ -134,7 +140,7 @@ export default function ProfileDialog() {
                 <Button
                   variant="secondary"
                   className="flex items-center gap-2"
-                  onClick={() => logout()}
+                  onClick={handleLogout}
                 >
                   <LogOut className="size-6" />
                   Logout

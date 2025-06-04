@@ -92,12 +92,12 @@ export default function Login() {
                         <FormItem className="grid gap-1">
                           <div className="flex justify-between items-center">
                             <FormLabel htmlFor="password">Password</FormLabel>
-                            <Link
+                            {/* <Link
                               href="#"
                               className="ml-auto inline-block text-sm underline"
                             >
                               Forgot your password?
-                            </Link>
+                            </Link> */}
                           </div>
                           <FormControl>
                             <PasswordInput

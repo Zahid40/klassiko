@@ -73,7 +73,7 @@ export default function QuestionPage() {
 
       {/* Add Question Section */}
       <div className="flex flex-row gap-6 justify-between items-center border rounded-lg p-8">
-        <p className="text-base text-balance text-neutral-700">
+        <p className="text-sm text-balance text-neutral-700">
           Add your Question and reuse it in any paper or quiz
         </p>
         <AddQuestionDialog onSuccess={refetch} />
@@ -82,16 +82,16 @@ export default function QuestionPage() {
       {/* Questions List */}
       <div className="border rounded-lg p-4 min-h-[70dvh]">
         {isLoading ? (
-          <p className="text-center text-gray-500">Loading questions...</p>
+          <p className="text-center text-neutral-500">Loading questions...</p>
         ) : questions.length > 0 ? (
-          <div className="space-y-2">
+          <div className="grid  grid-cols-1 md:grid-cols-2 gap-4">
             {questions.map((question: QuestionType) => (
               <div
                 key={question.id}
-                className="p-4 border rounded-md text-sm relative flex flex-col gap-2"
+                className="py-8 px-6 border rounded-md text-sm relative flex flex-col gap-2 min-h-24 bg-neutral-100"
               >
                 <Badge
-                  className="text-xs font-medium gap-2 absolute top-2 right-2"
+                  className="text-[9px] font-medium gap-2 absolute top-2 right-2"
                   variant={
                     question.question_type === "general"
                       ? "secondary"
@@ -102,11 +102,11 @@ export default function QuestionPage() {
                 >
                   {question.question_type === "general" ? (
                     <>
-                      <Asterisk size={16} /> General{" "}
+                      <Asterisk size={14} /> General{" "}
                     </>
                   ) : question.question_type === "multiple_choice" ? (
                     <>
-                      <SquareStack size={16} /> Multiple Choice{" "}
+                      <SquareStack size={14} /> Multiple Choice{" "}
                     </>
                   ) : (
                     "Undefined"
@@ -153,7 +153,7 @@ export default function QuestionPage() {
             ))}
           </div>
         ) : (
-          <p className="text-center text-gray-500">No questions found.</p>
+          <p className="text-center text-neutral-500">No questions found.</p>
         )}
 
         {/* Infinite Scroll Load More Trigger */}
@@ -169,7 +169,7 @@ export default function QuestionPage() {
 
         {/* Show end message when done */}
         {!hasNextPage && questions.length > 0 && (
-          <p className="text-center text-gray-500 mt-4">
+          <p className="text-center text-xs text-neutral-500 mt-6">
             You have reached the end!
           </p>
         )}

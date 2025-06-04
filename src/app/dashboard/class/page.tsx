@@ -123,28 +123,28 @@ export default function ClassPage({
   const classData = selectedClass.data[0];
 
   return (
-    <div className="flex flex-col gap-6 items-center h-full px-4 py-8">
-      {/* Avatar (optional) */}
-      <Avatar className="size-12 ">
-        <AvatarFallback className="bg-primary-500 text-background text-2xl font-bold capitalize">
-          {classData.class_name.slice(0, 1)}
-        </AvatarFallback>
-      </Avatar>
+    <div className="flex flex-col gap-6 items-start h-full px-4 py-8">
+      <div className="flex flex-row flex-wrap gap-2 items-center">
+        {/* Avatar (optional) */}
+        <Avatar className="size-12 ">
+          <AvatarFallback className="bg-primary-500 text-background text-2xl font-bold capitalize">
+            {classData.class_name.slice(0, 1)}
+          </AvatarFallback>
+        </Avatar>
+
+        <h1 className="text-2xl font-bold">{classData.class_name}</h1>
+      </div>
 
       {/* Class Info */}
-      <div className="text-center">
-        <h1 className="text-2xl font-bold">{classData.class_name}</h1>
-        <p className="text-neutral-700 text-sm text-center">
-          {classData.description}
-        </p>
-        <Separator className="w-full mt-2" />
-      </div>
-      <div>
+      <div className="flex flex-col gap-3">
+        <p className="text-neutral-700 text-sm ">{classData.description}</p>
         <CopyButton
-          text={`http://localhost:3000/class/join/${classId}`}
+        className="w-min"
+          text={`${window.location.origin}/class/join/${classId}`}
           title="Joining Link for Students"
         />
       </div>
+      
 
       <div className="flex gap-4 w-full">
         {/* Quizzes Section */}
