@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     const { data, error } = await supabase
       .from("users")
       .insert([
-        { name, email, password: hashedPassword, role, profile_picture },
+        { name, email, password: hashedPassword, role, profile_picture , created_at: new Date().toISOString(), updated_at: new Date().toISOString()},
       ])
       .select();
 
